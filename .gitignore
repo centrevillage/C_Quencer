@@ -30,3 +30,15 @@
 
 # Debug files
 *.dSYM/
+
+*.eep
+*.lss
+*.map
+*.sym
+*.d
+*.lst
+*.swp
+*.swo
+
+./src/build/*
+tags
