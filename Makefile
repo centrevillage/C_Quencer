@@ -55,6 +55,7 @@ OD      =$(addprefix $(BINPATH),avr-objdump)
 AS      =$(addprefix $(BINPATH),avr-as)
 SIZE    =$(addprefix $(BINPATH),avr-size)
 AVRDUDE =$(addprefix $(BINPATH),avrdude)
+NM      =$(addprefix $(BINPATH),avr-nm)
 REMOVE  = rm -f
 
 SRC=$(wildcard $(SRC_PATH)/*.c)
@@ -272,7 +273,7 @@ program: $(TARGET).hex $(TARGET).eep
 %.sym: %.elf
 	@echo
 	@echo $(MSG_SYMBOL_TABLE) $@
-	avr-nm -n $< > $@
+	$(NM) -n $< > $@
 
 
 
