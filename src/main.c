@@ -1,50 +1,32 @@
-// CV OUT, OSC OUT 以外の確認はOK
-//#include <SPI.h>
 #include <avr/io.h>
 #include <string.h>
 #include <util/delay.h>
 
-#include <Arduino.h>
+#define LDAC_MASK 0b00000010
+#define SS_MASK   0b00000001
+#define LDAC_SS_MASK = 0b00000011
 
-// From arduino
-//#define F_CPU     16000000L
+static unsigned int  bpmX10 = 1200;
+static unsigned char devide_count = 1;
+static unsigned char current_pos = 0;
+static unsigned char active_seq[16];
 
-//const int knob1_pin = 0;
-//const int knob2_pin = 1;
-//const int knob3_pin = 2;
-//const int knob4_pin = 3;
-//const int ss_pin = 8;
-//const int ldac_pin = 9;
-//const int switch1_pin = 5;
-//const int switch2_pin = 6;
-//const int switch3_pin = 7;
-//const int switch4_pin = A5;
-//const int trig_in_pin = A4;
-//const int gate_out_pin = 10;
+union ControllerState {
+  uint8_t data;
 
-const int LDAC_MASK      = 0b00000010; // PB1
-const int SS_MASK        = 0b00000001; // PB0
-const int LDAC_SS_MASK   = 0b00000011;
+  struct {
+    uint8_t rec :1;   // on recording
+    uint8_t start :1; // on sequence running
+    uint8_t sub :1;   // on sub function
+    uint8_t hid :1;   // on hidden function
+    uint8_t func_lock :1; // on sub function lock
+  } bit;
 
-unsigned char g_active_seq[16];
-
-struct Task {
-  unsigned long interval;
-  unsigned long last;
-  void (*callback)();
 };
 
-#define TASK_LEN 4
-struct Task g_tasks[TASK_LEN];
+union ControllerState current_state;
 
 void spi_init() {
-  // For Arduino
-  //// initialize DAC
-  //SPI.begin();
-  //SPI.setBitOrder(MSBFIRST);
-  //SPI.setClockDivider(SPI_CLOCK_DIV8);
-  //SPI.setDataMode(SPI_MODE0);
-
   //Enable SPI, Master, set clock rate fck/16
   SPCR = (1<<SPE)|(1<<MSTR)|(1<<SPR0);
 }
@@ -85,35 +67,27 @@ uint16_t adc_read(uint8_t pin) {
 };
 
 // seq task
-int g_step_i = 0;
+static int g_step_i = 0;
 void step_seq() {
-  g_active_seq[g_step_i] = 1;
+  active_seq[g_step_i] = 1;
   if (++g_step_i >= 16) {
     g_step_i = 0;
-    memset(g_active_seq, 0, sizeof(g_active_seq));
+    memset(active_seq, 0, sizeof(active_seq));
   }
 }
 
 // TODO: アナログ入力についてはCPUの時間を空けるために順番に値を読む
 // input task
-float g_fill_len_rate = 0.0f;
+static float g_fill_len_rate = 0.0f;
 void handle_input() {
-  // int fill_len_v = analogRead(knob1_pin);
-  // int rot_v = analogRead(knob2_pin);
-  // int seqpat_v = analogRead(knob3_pin);
-  // int range_v = analogRead(knob4_pin);
-  // int func_b = digitalRead(switch1_pin);
-  // int start_b = digitalRead(switch2_pin);
-  // int tap_b = digitalRead(switch3_pin);
-  // int rec_b = digitalRead(switch4_pin);
-  
+
   uint16_t fill_len_v = adc_read(0);
   uint16_t rot_len_v  = adc_read(1);
   uint16_t seq_pat_v  = adc_read(2);
   uint16_t range_v    = adc_read(3);
   unsigned char func_b  = PIND & _BV(5);
-  unsigned char start_b = PIND & _BV(6);
-  unsigned char tap_b   = PIND & _BV(7);
+  //unsigned char start_b = PIND & _BV(6); // ピン割り込み？
+  //unsigned char tap_b   = PIND & _BV(7); // ピン割り込み？
   unsigned char rec_b   = PINC & _BV(5);
 
   g_fill_len_rate = (float) fill_len_v / 1024.0f;
@@ -127,7 +101,7 @@ const uint8_t LED_MASK = 0b00011111;
 void output_led() {
   DDRD = 0;
   PORTD &= (uint8_t)~LED_MASK;
-  if (g_active_seq[g_led_i]) {
+  if (active_seq[g_led_i]) {
     switch (g_led_i) {
       case 0:
         PORTD |= 0b00000010;
@@ -247,6 +221,9 @@ void setup_pins() {
   PORTC = _BV(5);
 }
 
+void timer_init() {
+}
+
 // the setup function runs once when you press reset or power the board
 void setup() {
   ACSR |= (1<<ACD); //analog comparator off
@@ -255,54 +232,24 @@ void setup() {
   setup_pins();
 
   // initialize sequence
-  memset(g_active_seq, 0, sizeof(g_active_seq));
+  memset(active_seq, 0, sizeof(active_seq));
 
   adc_init();
   spi_init();
-
-  // setup task
-  unsigned long start_usec = micros();
-  struct Task seq_task = {50000, start_usec, step_seq},
-              led_task = {10, start_usec, output_led},
-              input_task = {10, start_usec, handle_input},
-              dac_task = {10, start_usec, output_osc};
-  g_tasks[0] = input_task;
-  g_tasks[1] = led_task;
-  g_tasks[2] = seq_task;
-  g_tasks[3] = dac_task;
 }
 
 unsigned long g_current_usec = 0;
 void loop() {
-  const unsigned long usec = micros();
-  if (g_current_usec > usec) {
-    // time wrap!
-    for (int i = 0; i < TASK_LEN; ++i) {
-      struct Task * const t = &g_tasks[i];
-      (*t).last = usec;
-    }
-  }
-  g_current_usec = usec;
-  for (int i = 0; i < TASK_LEN; ++i) {
-    struct Task * const t = &g_tasks[i];
-    if (usec - (*t).last > (*t).interval) {
-      (*t).last = usec;
-      (*t).callback();
-    }
-  }
+  //step_seq(); // process Timer2?
+  output_led();
+  handle_input();
+  //output_osc(); // process Timer1?
 }
 
 // from Arduino ==
-
-int main(void)
-{
-	init();
-
+int main(void) {
+  timer_init();
 	setup();
-    
-	for (;;) {
-		loop();
-	}
-        
+	for (;;) { loop(); }
 	return 0;
 }
