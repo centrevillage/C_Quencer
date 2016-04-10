@@ -74,6 +74,8 @@ ASRC =
 CFLAGS =
 LDFLAGS =
 
+NO_ARDUINO = 1
+
 ### These macros pertain to supporting Arduino libs
 ifndef NO_ARDUINO
 	LDFLAGS += -lm # -lm = math library
