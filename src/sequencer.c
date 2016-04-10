@@ -1,4 +1,6 @@
 #include "sequencer.h"
+#include "input.h"
+#include "timer.h"
 
 unsigned char active_seq[16];
 volatile uint8_t current_step = 0;

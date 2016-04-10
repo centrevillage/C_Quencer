@@ -26,18 +26,8 @@ char read_spi() {
 // ldac_pin = PB1
 // ss_pin = PB0
 void output_osc() {
-  //// test
-  //int max_i = 4096 * g_fill_len_rate;
-  //for (int i = 0; i < max_i; i += 4) {
-  //  //digitalWrite(ldac_pin, HIGH);
-  //  //digitalWrite(ss_pin, LOW);
-  //  PORTB = (PORTB & ~LDAC_SS_MASK) | LDAC_MASK;
-
-  //  SPI.transfer((i >> 8) | 0x30);
-  //  SPI.transfer(i & 0xff);
-
-  //  //digitalWrite(ss_pin, HIGH);
-  //  //digitalWrite(ldac_pin, LOW);
-  //  PORTB = (PORTB & ~LDAC_SS_MASK) | SS_MASK;
-  //}
+  PORTB = (PORTB & ~LDAC_SS_MASK) | LDAC_MASK;
+  //trans_spi((i >> 8) | 0x30);
+  //trans_spi(i & 0xff);
+  PORTB = (PORTB & ~LDAC_SS_MASK) | SS_MASK;
 }
