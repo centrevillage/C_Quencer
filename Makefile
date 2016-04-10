@@ -29,10 +29,10 @@ ifndef MCU
 MCU = atmega328p
 endif
 ifndef AVRDUDE_PROGRAMMER
-AVRDUDE_PROGRAMMER = stk500v1
+AVRDUDE_PROGRAMMER = avrisp
 endif
 ifndef AVRDUDE_PORT
-AVRDUDE_PORT = com8
+AVRDUDE_PORT = com4
 endif
 ifndef BAUDRATE
 BAUDRATE = 19200
@@ -47,6 +47,13 @@ BINPATH=$(AVR_TOOLKIT_ROOT)/bin/
 else
 BINPATH=""
 endif
+
+ifdef AVR_TOOLKIT_ROOT
+AVRDUDE_CONF=-C $(AVR_TOOLKIT_ROOT)/etc/avrdude.conf
+else
+AVRDUDE_CONF=
+endif
+
 CC      =$(addprefix $(BINPATH),avr-gcc)
 CXX     =$(addprefix $(BINPATH),avr-c++)
 LD      =$(addprefix $(BINPATH),avr-ld)
@@ -119,7 +126,7 @@ LDFLAGS += -Wl,-Map=$(TARGET).map,--cref
 AVRDUDE_WRITE_FLASH = -U flash:w:$(TARGET).hex
 #AVRDUDE_WRITE_EEPROM = -U eeprom:w:$(TARGET).eep
 
-AVRDUDE_FLAGS = -p $(MCU) -P $(AVRDUDE_PORT) -c $(AVRDUDE_PROGRAMMER)
+AVRDUDE_FLAGS = -p $(MCU) -P $(AVRDUDE_PORT) -c $(AVRDUDE_PROGRAMMER) $(AVRDUDE_CONF)
 
 # Uncomment the following if you want avrdude's erase cycle counter.
 # Note that this counter needs to be initialized first using -Yn,
