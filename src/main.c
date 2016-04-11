@@ -43,6 +43,7 @@ void setup() {
 
 void loop() {
   output_led();
+  output_osc();
 }
 
 // from Arduino ==

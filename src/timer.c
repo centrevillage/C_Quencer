@@ -1,6 +1,5 @@
 #include "timer.h"
 #include "sequencer.h"
-#include "dac.h"
 
 // Timer setting
 // timer0: gate length timer
@@ -12,7 +11,7 @@ void timer_init() {
   TIMSK0 |= (1<<TOIE0); // overflow interrupt
 
   // Timer 1 == 
-  TCCR1B |= (1<<CS12) | (1<<CS10); // divide 1024
+  stop_seq();
   TCCR1B |= (1<<WGM12); // CTC
   update_step_time();
   TIMSK1 |= (1<<OCIE1A);
@@ -32,10 +31,8 @@ void start_gate_timer() {
 
 }
 
-// 16.000.000 / 1024 = 15625 = 1 sec
-// bpsX1000 in (239 (=14BPM) upto 15625(=937.5 BPM)
 void update_step_time() {
-  OCR1A = (uint16_t) 15625L * 1000L / bpsX1000 / divide_count;
+  OCR1A = step_interval;
 }
 
 // gate timer interrupt
@@ -51,7 +48,33 @@ ISR (TIMER1_COMPA_vect) {
   step_seq();
 }
 
-// DAC interrupt
+volatile unsigned long current_wrap_count = 0L;
 ISR (TIMER2_OVF_vect) {
-  output_osc();
+  cli();
+  ++current_wrap_count;
+  sei();
+}
+
+void start_seq() {
+  TCCR1B |= (1<<CS12) | (1<<CS10); // divide 1024
+}
+
+void stop_seq() {
+  TCCR1B &= ~(1<<CS12) | (1<<CS10);
+}
+
+unsigned long millis() {
+  cli();
+  // 1.tick == 16msec
+  const uint8_t mhz = (F_CPU / 1000000);
+  unsigned long mmsec = current_wrap_count * mhz + (TCNT2 * mhz / 256);
+  sei();
+  return mmsec;
+}
+
+unsigned long ticks() {
+  cli();
+  unsigned long ticks = current_wrap_count * 256 + TCNT2;
+  sei();
+  return ticks;
 }
