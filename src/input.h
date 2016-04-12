@@ -50,6 +50,8 @@ struct ButtonHistory {
   uint16_t interval_tick;
 };
 
+extern volatile struct ButtonHistory button_history;
+
 struct ControllerValue recorded_values[128];
 struct ControllerValue recorded_value_flags[128]; // 0 = not recorded, 1 = recorded
 

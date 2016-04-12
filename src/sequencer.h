@@ -1,4 +1,5 @@
 #include <avr/io.h>
+#include <stdlib.h>
 
 #ifndef CQ_SEQUENCER_H_
 #define CQ_SEQUENCER_H_
@@ -13,6 +14,8 @@ void step_seq();
 void reset_seq();
 void set_divide(uint8_t divide);
 void set_step_interval(uint16_t tick);
+void update_seq_pattern();
+void randomize_seq();
 
 #endif /* CQ_SEQUENCER_H_ */
 

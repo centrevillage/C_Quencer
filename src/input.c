@@ -10,8 +10,7 @@ volatile enum RecMode  rec_mode = STOP;
 volatile enum FuncMode func_mode = NONE;
 
 volatile static union ControllerState current_state;
-volatile static struct ButtonHistory button_history;
-
+volatile struct ButtonHistory button_history;
 
 // input task
 void read_knob_values() {
@@ -25,14 +24,17 @@ void read_knob_values() {
 }
 
 void set_current_value(uint8_t value, uint8_t knob_idx) {
+  uint8_t is_change_seq = 0;
   switch (knob_idx) {
     case 0: // fill / len / glide
       switch (func_mode) {
         case NONE:
           current_values.step_length = value & 0xF0 + 1;
+          is_change_seq = 1;
           break;
         case FUNC:
           current_values.step_fill = value & 0xF0 + 1;
+          is_change_seq = 1;
           break;
         case HID:
           current_values.glide = value;
@@ -44,9 +46,11 @@ void set_current_value(uint8_t value, uint8_t knob_idx) {
       switch (func_mode) {
         case NONE:
           current_values.step_rot = value & 0xF0;
+          is_change_seq = 1;
           break;
         case FUNC:
-          current_values.step_rand = value;
+          current_values.step_rand = value / 2;
+          is_change_seq = 1;
           set_led_count(value & 0xF0 + 1);
           break;
         case HID:
@@ -59,7 +63,6 @@ void set_current_value(uint8_t value, uint8_t knob_idx) {
       switch (func_mode) {
         case NONE:
           current_values.scale_select = value ;
-          // TODO: 
           set_display_mode(SCALE);
           break;
         case FUNC:
@@ -90,6 +93,9 @@ void set_current_value(uint8_t value, uint8_t knob_idx) {
       break;
     default:
       break;
+  }
+  if (is_change_seq) {
+    update_seq_pattern();
   }
 }
 

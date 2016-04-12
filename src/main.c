@@ -32,9 +32,6 @@ void setup() {
   // initialize pin
   setup_pins();
 
-  // initialize sequence
-  memset(active_seq, 0, sizeof(active_seq));
-
   adc_init();
   spi_init();
 
