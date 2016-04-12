@@ -2,6 +2,9 @@
 #include "sequencer.h"
 #include "adc.h"
 #include "timer.h"
+#include "led.h"
+
+volatile struct ControllerValue current_values;
 
 volatile enum RecMode  rec_mode = STOP;
 volatile enum FuncMode func_mode = NONE;
@@ -33,6 +36,7 @@ void set_current_value(uint8_t value, uint8_t knob_idx) {
           break;
         case HID:
           current_values.glide = value;
+          set_led_count(value & 0xF0 + 1);
           break;
       }
       break;
@@ -43,9 +47,11 @@ void set_current_value(uint8_t value, uint8_t knob_idx) {
           break;
         case FUNC:
           current_values.step_rand = value;
+          set_led_count(value & 0xF0 + 1);
           break;
         case HID:
           current_values.swing = value;
+          set_led_count(value & 0xF0 + 1);
           break;
       }
       break;
@@ -53,25 +59,32 @@ void set_current_value(uint8_t value, uint8_t knob_idx) {
       switch (func_mode) {
         case NONE:
           current_values.scale_select = value ;
+          // TODO: 
+          set_display_mode(SCALE);
           break;
         case FUNC:
-          current_values.scale_transpose = value;
+          current_values.scale_transpose = (uint8_t)(((uint16_t)value) * 95 / 255);
+          set_led_count(value & 0xF0 + 1);
           break;
         case HID:
           current_values.scale_select_random = value;
+          set_led_count(value & 0xF0 + 1);
           break;
       }
       break;
     case 3: // scale pattern / scale range / scale pattern random
       switch (func_mode) {
         case NONE:
-          current_values.scale_select = value ;
+          current_values.scale_pattern = value ;
+          set_led_count(value & 0xF0 + 1);
           break;
         case FUNC:
           current_values.scale_range = value;
+          set_led_count(value & 0xF0 + 1);
           break;
         case HID:
           current_values.scale_pattern_random = value;
+          set_led_count(value & 0xF0 + 1);
           break;
       }
       break;

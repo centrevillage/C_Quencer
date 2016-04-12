@@ -32,12 +32,15 @@ struct ControllerValue {
   uint16_t step_rand;
   uint16_t scale_select;
   uint16_t scale_select_random;
-  uint16_t scale_transpose;
+  uint16_t scale_pattern;
+  uint16_t scale_transpose; // scale_transpose = 0: C1 - 95: B8 
   uint16_t scale_range;
   uint16_t scale_pattern_random;
   uint16_t glide;
   uint16_t swing;
-} current_values;
+};
+
+extern volatile struct ControllerValue current_values;
 
 struct ButtonHistory {
   enum FuncMode mode; 

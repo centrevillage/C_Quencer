@@ -8,7 +8,6 @@ volatile uint8_t current_step = 0;
 volatile uint16_t step_interval = 2000L;
 volatile uint8_t  divide_count = 1;
 volatile uint8_t  divide_idx = 1;
-volatile uint8_t  current_pos = 0;
 
 void step_seq() {
   if (divide_idx < divide_count) {
