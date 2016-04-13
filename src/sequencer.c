@@ -24,7 +24,7 @@ void step_seq() {
     update_seq_pattern();
   }
   read_knob_values();
-  start_gate_timer(); // TODO: アクティブなstepの場合だけゲートを出す
+  start_gate_timer();
 }
 
 void reset_seq() {
