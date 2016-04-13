@@ -33,12 +33,12 @@ static uint8_t led_idx_to_port_and_ddr[16][2] = {
 
 void output_led_on_seq() {
   if (active_seq[g_led_i]) {
-    if (!(current_step == g_led_i && bit_is_clear(PORTB, 2))) {
+    if (!(current_step == g_led_i && active_step_gate)) {
       PORTD |= led_idx_to_port_and_ddr[g_led_i][0];
       DDRD   = led_idx_to_port_and_ddr[g_led_i][1];
     }
   } else {
-    if (current_step == g_led_i && bit_is_clear(PORTB, 2)) {
+    if (current_step == g_led_i && active_step_gate) {
       PORTD |= led_idx_to_port_and_ddr[g_led_i][0];
       DDRD   = led_idx_to_port_and_ddr[g_led_i][1];
     }

@@ -26,9 +26,13 @@ void start_gate_timer() {
   TCNT0 = 0; 
   //start timer
   TCCR0B |= (1<<CS02) | (1<<CS00); // divide 1024
-  //gate on
-  PORTB &= ~_BV(2);
+  
+  if (active_seq[current_step]) {
+    //gate on
+    PORTB &= ~_BV(2);
+  }
 
+  active_step_gate = 1;
 }
 
 void update_step_time() {
@@ -41,6 +45,7 @@ ISR (TIMER0_OVF_vect) {
   TCCR0B &= ~((1<<CS02) | (1<<CS00));
   //gate off(=HIGH) (PB2)
   PORTB |= _BV(2);
+  active_step_gate = 0;
 }
 
 // step timer interrupt
