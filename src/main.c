@@ -38,9 +38,16 @@ void setup() {
   read_knob_values();
 }
 
+static uint16_t prev_timer_count = 65535;
 void loop() {
+  cli();
+  uint16_t current_timer_count = TCNT1;
+  sei();
   output_led();
-  output_osc();
+  if (prev_timer_count != current_timer_count) {
+    output_osc(current_timer_count);
+    prev_timer_count = current_timer_count;
+  }
 }
 
 // from Arduino ==

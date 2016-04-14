@@ -6,10 +6,14 @@
 #define LDAC_MASK 0b00000010
 #define SS_MASK   0b00000001
 #define LDAC_SS_MASK 0b00000011
+#define BASE_HZ 440
 
-void output_osc();
+void output_osc(uint16_t timer_count);
 void spi_init();
 void trans_spi(char data);
 char read_spi();
+static uint8_t current_wave_cycle(); // return cycle tick
+
+static uint16_t pitch_to_count[96];
 
 #endif /* CQ_DAC_H_ */
