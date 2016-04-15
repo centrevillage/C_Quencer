@@ -4,7 +4,7 @@
 #include "timer.h"
 #include "led.h"
 
-volatile struct ControllerValue current_values;
+volatile ControllerValue current_values;
 
 volatile enum RecMode  rec_mode = STOP;
 volatile enum FuncMode func_mode = NONE;
@@ -29,15 +29,18 @@ void set_current_value(uint8_t value, uint8_t knob_idx) {
     case 0: // fill / len / glide
       switch (func_mode) {
         case NONE:
-          current_values.step_length = ((value & 0xF0) >> 4) + 1;
+          current_values.v.step_length = ((value & 0xF0) >> 4) + 1;
+          changed_value_flags.v.step_length = 1;
           is_change_seq = 1;
           break;
         case FUNC:
-          current_values.step_fill = ((value & 0xF0) >> 4) + 1;
+          current_values.v.step_fill = ((value & 0xF0) >> 4) + 1;
+          changed_value_flags.v.step_fill = 1;
           is_change_seq = 1;
           break;
         case HID:
-          current_values.glide = value;
+          current_values.v.glide = value;
+          changed_value_flags.v.glide = 1;
           set_led_count(((value & 0xF0) >> 4) + 1);
           break;
       }
@@ -45,16 +48,19 @@ void set_current_value(uint8_t value, uint8_t knob_idx) {
     case 1: // rot / rand / swing
       switch (func_mode) {
         case NONE:
-          current_values.step_rot = (value & 0xF0) >> 4;
+          current_values.v.step_rot = (value & 0xF0) >> 4;
+          changed_value_flags.v.step_rot = 1;
           is_change_seq = 1;
           break;
         case FUNC:
-          current_values.step_rand = value / 2;
+          current_values.v.step_rand = value / 2;
+          changed_value_flags.v.step_rand = 1;
           is_change_seq = 1;
           set_led_count(((value & 0xF0) >> 4) + 1);
           break;
         case HID:
-          current_values.swing = value;
+          current_values.v.swing = value;
+          changed_value_flags.v.swing= 1;
           set_led_count(((value & 0xF0) >> 4) + 1);
           break;
       }
@@ -62,15 +68,18 @@ void set_current_value(uint8_t value, uint8_t knob_idx) {
     case 2: // scale select / transpose / scale pattern random
       switch (func_mode) {
         case NONE:
-          current_values.scale_select = value;
+          current_values.v.scale_select = value;
+          changed_value_flags.v.scale_select = 1;
           set_display_mode(SCALE);
           break;
         case FUNC:
-          current_values.scale_transpose = (uint8_t)(((uint16_t)value) * 95 / 255);
+          current_values.v.scale_transpose = (uint8_t)(((uint16_t)value) * 95 / 255);
+          changed_value_flags.v.scale_transpose = 1;
           set_led_count(((value & 0xF0) >> 4) + 1);
           break;
         case HID:
-          current_values.scale_select_random = (value & 0xF0) >> 4;
+          current_values.v.scale_select_random = (value & 0xF0) >> 4;
+          changed_value_flags.v.scale_select_random = 1;
           set_led_count(((value & 0xF0) >> 4) + 1);
           break;
       }
@@ -78,15 +87,18 @@ void set_current_value(uint8_t value, uint8_t knob_idx) {
     case 3: // scale pattern / scale range / scale pattern random
       switch (func_mode) {
         case NONE:
-          current_values.scale_pattern = value ;
+          current_values.v.scale_pattern = value ;
+          changed_value_flags.v.scale_pattern = 1;
           set_led_count(((value & 0xF0) >> 4) + 1);
           break;
         case FUNC:
-          current_values.scale_range = value;
+          current_values.v.scale_range = value;
+          changed_value_flags.v.scale_range = 1;
           set_led_count((value & 0xF0 >> 4) + 1);
           break;
         case HID:
-          current_values.scale_pattern_random = value;
+          current_values.v.scale_pattern_random = value;
+          changed_value_flags.v.scale_pattern_random = 1;
           set_led_count(((value & 0xF0) >> 4) + 1);
           break;
       }
@@ -293,3 +305,15 @@ ISR(PCINT1_vect) {
   return;	
 };
 
+static uint8_t record_pos = 0;
+void record_current_knob_values() {
+  for (int i = 0; i < sizeof(ControllerValue); ++i) {
+    if (changed_value_flags.values[i]) {
+      recorded_values[record_pos].values[i] = current_values.values[i];
+      recorded_value_flags[record_pos].values[i] = 1;
+    }
+  }
+
+  record_pos++;
+  memset(&changed_value_flags, 0, sizeof(ControllerValue));
+}

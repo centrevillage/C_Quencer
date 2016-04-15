@@ -55,7 +55,7 @@ void output_led_on_value() {
 void output_led_on_scale() {
   if (g_led_i < 8) {
     // scale keys
-    uint8_t v = current_values.scale_select;
+    uint8_t v = current_values.v.scale_select;
     if (v & (1<<g_led_i)) {
       PORTD |= led_idx_to_port_and_ddr[g_led_i][0];
       DDRD   = led_idx_to_port_and_ddr[g_led_i][1];
@@ -66,7 +66,7 @@ void output_led_on_scale() {
 }
 
 void output_led_on_transpose_key() {
-  uint8_t v = current_values.scale_transpose % 12; // scale_transpose = 0: C1 - 95: B8 
+  uint8_t v = current_values.v.scale_transpose % 12; // scale_transpose = 0: C1 - 95: B8 
   if (v % 2 == 0) {
     if (g_led_i == 9 + (v/2)) {
       PORTD |= led_idx_to_port_and_ddr[g_led_i][0];
@@ -82,7 +82,7 @@ void output_led_on_transpose_key() {
 
 void output_led_on_transpose() {
   if (g_led_i < 8) {
-    uint8_t v = 7 - (current_values.scale_transpose / 12); // scale_transpose = 0: C1 - 95: B8 
+    uint8_t v = 7 - (current_values.v.scale_transpose / 12); // scale_transpose = 0: C1 - 95: B8 
     if (g_led_i == v) {
       PORTD |= led_idx_to_port_and_ddr[g_led_i][0];
       DDRD   = led_idx_to_port_and_ddr[g_led_i][1];

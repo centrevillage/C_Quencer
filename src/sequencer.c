@@ -19,13 +19,16 @@ void step_seq() {
     return;
   }
   divide_idx = 1;
-  if (current_step < (current_values.step_length-1)) {
+  if (current_step < (current_values.v.step_length-1)) {
     ++current_step;
   } else {
     current_step = 0;
     update_seq_pattern();
   }
   read_knob_values();
+  if (rec_mode == REC) {
+    record_current_knob_values();
+  }
   update_pitch();
   start_gate_timer();
 }
@@ -46,8 +49,8 @@ void set_step_interval(uint16_t tick) {
 }
 
 void update_seq_pattern() {
-  uint16_t euclid_seq = euclid_seq_table[current_values.step_length-1][current_values.step_fill-1];
-  for (int i = current_values.step_rot % current_values.step_length, j = 0; j < current_values.step_length; i = (i+1) % current_values.step_length, ++j) {
+  uint16_t euclid_seq = euclid_seq_table[current_values.v.step_length-1][current_values.v.step_fill-1];
+  for (int i = current_values.v.step_rot % current_values.v.step_length, j = 0; j < current_values.v.step_length; i = (i+1) % current_values.v.step_length, ++j) {
     active_seq[j] = euclid_seq & (1<<i);
   }
   randomize_seq();
@@ -55,9 +58,9 @@ void update_seq_pattern() {
 
 void randomize_seq() {
   srand(button_history.last_tick);
-  if (current_values.step_rand > 0) {
-    for (int i = 0; i < current_values.step_length; ++i) {
-      if ((uint8_t)(rand() >> 8) < current_values.step_rand) {
+  if (current_values.v.step_rand > 0) {
+    for (int i = 0; i < current_values.v.step_length; ++i) {
+      if ((uint8_t)(rand() >> 8) < current_values.v.step_rand) {
         active_seq[i] = !active_seq[i];
       }
     }
@@ -68,8 +71,8 @@ void randomize_seq() {
 static uint8_t pattern_idx_to_pitch_idx[8] = {0, 2, 4, 5, 6, 7, 9, 11};
 
 void update_pitch() {
-  long pattern_value = (scale_patterns[current_values.scale_pattern][current_step] - 8) * current_values.scale_range;
-  long rand_value = (uint8_t)(((int)current_values.scale_pattern_random * (int)(((rand() & 0xFF00) >> 8) - 127))/16);
+  long pattern_value = (scale_patterns[current_values.v.scale_pattern][current_step] - 8) * current_values.v.scale_range;
+  long rand_value = (uint8_t)(((int)current_values.v.scale_pattern_random * (int)(((rand() & 0xFF00) >> 8) - 127))/16);
   uint16_t tmp_value = (pattern_value + rand_value) / 128;
 
   // quantize
@@ -78,13 +81,13 @@ void update_pitch() {
   uint8_t near_minus_idx = 12;
   uint8_t near_plus_idx = 12;
   for (int i = upper_value; i < 8; ++i) {
-    if (current_values.scale_select & (1<<i)) {
+    if (current_values.v.scale_select & (1<<i)) {
       near_plus_idx = i;
       break;
     }
   }
   for (int i = upper_value; i >= 0; --i) {
-    if (current_values.scale_select & (1<<i)) {
+    if (current_values.v.scale_select & (1<<i)) {
       near_minus_idx = i;
       break;
     }
@@ -97,7 +100,7 @@ void update_pitch() {
   base_value = tmp_value / 8 * 8;
   upper_value = tmp_value - base_value;
 
-  uint8_t current_pitch_tmp = (base_value/8*12) + pattern_idx_to_pitch_idx[upper_value] + current_values.scale_transpose;
+  uint8_t current_pitch_tmp = (base_value/8*12) + pattern_idx_to_pitch_idx[upper_value] + current_values.v.scale_transpose;
   if (current_pitch_tmp > 95) {
     current_pitch = 95;
   } else {
