@@ -12,8 +12,7 @@ void output_osc(uint16_t timer_count);
 void spi_init();
 void trans_spi(char data);
 char read_spi();
-static uint8_t current_wave_cycle(); // return cycle tick
 
-static uint16_t pitch_to_count[96];
+static uint16_t pitch_to_tableidx_x100[96];
 
 #endif /* CQ_DAC_H_ */

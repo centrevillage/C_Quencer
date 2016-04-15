@@ -26,18 +26,18 @@ enum FuncMode get_func_mode();
 // 0x11111111 -> BAG(F#)FEDC
 // scale value is 8bit boolean field.
 struct ControllerValue {
-  uint16_t step_fill;
-  uint16_t step_length;
-  uint16_t step_rot;
-  uint16_t step_rand;
-  uint16_t scale_select;
-  uint16_t scale_select_random;
-  uint16_t scale_pattern;
-  uint16_t scale_transpose; // scale_transpose = 0: C1 - 95: B8 
-  uint16_t scale_range;
-  uint16_t scale_pattern_random;
-  uint16_t glide;
-  uint16_t swing;
+  uint8_t step_fill;
+  uint8_t step_length;
+  uint8_t step_rot;
+  uint8_t step_rand;
+  uint8_t scale_select;
+  uint8_t scale_select_random;
+  uint8_t scale_pattern;
+  uint8_t scale_transpose; // scale_transpose = 0: C1 - 95: B8 
+  uint8_t scale_range;
+  uint8_t scale_pattern_random;
+  uint8_t glide;
+  uint8_t swing;
 };
 
 extern volatile struct ControllerValue current_values;

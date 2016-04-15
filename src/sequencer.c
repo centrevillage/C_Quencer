@@ -2,6 +2,7 @@
 #include "input.h"
 #include "timer.h"
 #include "euclid.h"
+#include "pattern.h"
 
 volatile unsigned char active_seq[16] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 volatile uint8_t current_step = 0;
@@ -10,6 +11,7 @@ volatile uint16_t step_interval = 2000L;
 volatile uint8_t  divide_count = 1;
 volatile uint8_t  divide_idx = 1;
 volatile uint8_t active_step_gate = 0;
+volatile uint8_t current_pitch = 0;
 
 void step_seq() {
   if (divide_idx < divide_count) {
@@ -24,6 +26,7 @@ void step_seq() {
     update_seq_pattern();
   }
   read_knob_values();
+  update_pitch();
   start_gate_timer();
 }
 
@@ -51,12 +54,25 @@ void update_seq_pattern() {
 }
 
 void randomize_seq() {
+  srand(button_history.last_tick);
   if (current_values.step_rand > 0) {
-    srand(button_history.last_tick);
     for (int i = 0; i < current_values.step_length; ++i) {
       if ((uint8_t)(rand() >> 8) < current_values.step_rand) {
         active_seq[i] = !active_seq[i];
       }
     }
   }
+}
+
+void update_pitch() {
+  uint8_t scale_select_value = (uint8_t)((current_values.scale_select + current_values.scale_select_random * (int)(((rand() & 0xFF00) >> 8) - 127)/128) % 16);
+  long pattern_value = (scale_patterns[scale_select_value][current_step] - 8) * current_values.scale_range;
+  long rand_value = (uint8_t)(((int)current_values.scale_pattern_random * (int)(((rand() & 0xFF00) >> 8) - 127))/16);
+  long tmp_value = current_values.scale_transpose + (pattern_value + rand_value) / 128;
+  if (tmp_value < 0) {
+    tmp_value = 0;
+  } else if (tmp_value > 95) {
+    tmp_value = 95;
+  }
+  current_pitch = (uint8_t) tmp_value;
 }

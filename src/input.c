@@ -29,49 +29,49 @@ void set_current_value(uint8_t value, uint8_t knob_idx) {
     case 0: // fill / len / glide
       switch (func_mode) {
         case NONE:
-          current_values.step_length = value & 0xF0 + 1;
+          current_values.step_length = ((value & 0xF0) >> 4) + 1;
           is_change_seq = 1;
           break;
         case FUNC:
-          current_values.step_fill = value & 0xF0 + 1;
+          current_values.step_fill = ((value & 0xF0) >> 4) + 1;
           is_change_seq = 1;
           break;
         case HID:
           current_values.glide = value;
-          set_led_count(value & 0xF0 + 1);
+          set_led_count(((value & 0xF0) >> 4) + 1);
           break;
       }
       break;
     case 1: // rot / rand / swing
       switch (func_mode) {
         case NONE:
-          current_values.step_rot = value & 0xF0;
+          current_values.step_rot = (value & 0xF0) >> 4;
           is_change_seq = 1;
           break;
         case FUNC:
           current_values.step_rand = value / 2;
           is_change_seq = 1;
-          set_led_count(value & 0xF0 + 1);
+          set_led_count(((value & 0xF0) >> 4) + 1);
           break;
         case HID:
           current_values.swing = value;
-          set_led_count(value & 0xF0 + 1);
+          set_led_count(((value & 0xF0) >> 4) + 1);
           break;
       }
       break;
     case 2: // scale select / transpose / scale pattern random
       switch (func_mode) {
         case NONE:
-          current_values.scale_select = value ;
+          current_values.scale_select = ((value & 0xF0) >> 4);
           set_display_mode(SCALE);
           break;
         case FUNC:
           current_values.scale_transpose = (uint8_t)(((uint16_t)value) * 95 / 255);
-          set_led_count(value & 0xF0 + 1);
+          set_led_count(((value & 0xF0) >> 4) + 1);
           break;
         case HID:
-          current_values.scale_select_random = value;
-          set_led_count(value & 0xF0 + 1);
+          current_values.scale_select_random = (value & 0xF0) >> 4;
+          set_led_count(((value & 0xF0) >> 4) + 1);
           break;
       }
       break;
@@ -79,15 +79,15 @@ void set_current_value(uint8_t value, uint8_t knob_idx) {
       switch (func_mode) {
         case NONE:
           current_values.scale_pattern = value ;
-          set_led_count(value & 0xF0 + 1);
+          set_led_count(((value & 0xF0) >> 4) + 1);
           break;
         case FUNC:
           current_values.scale_range = value;
-          set_led_count(value & 0xF0 + 1);
+          set_led_count((value & 0xF0 >> 4) + 1);
           break;
         case HID:
           current_values.scale_pattern_random = value;
-          set_led_count(value & 0xF0 + 1);
+          set_led_count(((value & 0xF0) >> 4) + 1);
           break;
       }
       break;
