@@ -62,7 +62,7 @@ void set_current_value(uint8_t value, uint8_t knob_idx) {
     case 2: // scale select / transpose / scale pattern random
       switch (func_mode) {
         case NONE:
-          current_values.scale_select = ((value & 0xF0) >> 4);
+          current_values.scale_select = value;
           set_display_mode(SCALE);
           break;
         case FUNC:

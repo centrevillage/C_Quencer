@@ -57,3 +57,7 @@ void output_osc(uint16_t timer_count) {
   uint16_t current_value = wavetables[wavetable_idx][current_table_index];
   output_dac_a(current_value*4);
 }
+
+void output_cv(uint16_t timer_count) {
+  output_dac_b(((uint16_t)current_pitch)*4);
+}

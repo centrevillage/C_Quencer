@@ -64,15 +64,43 @@ void randomize_seq() {
   }
 }
 
+//CDEFF#GAB = 0 2 4 5 6 7 9 11 
+static uint8_t pattern_idx_to_pitch_idx[8] = {0, 2, 4, 5, 6, 7, 9, 11};
+
 void update_pitch() {
-  uint8_t scale_select_value = (uint8_t)((current_values.scale_select + current_values.scale_select_random * (int)(((rand() & 0xFF00) >> 8) - 127)/128) % 16);
-  long pattern_value = (scale_patterns[scale_select_value][current_step] - 8) * current_values.scale_range;
+  long pattern_value = (scale_patterns[current_values.scale_pattern][current_step] - 8) * current_values.scale_range;
   long rand_value = (uint8_t)(((int)current_values.scale_pattern_random * (int)(((rand() & 0xFF00) >> 8) - 127))/16);
-  long tmp_value = current_values.scale_transpose + (pattern_value + rand_value) / 128;
-  if (tmp_value < 0) {
-    tmp_value = 0;
-  } else if (tmp_value > 95) {
-    tmp_value = 95;
+  uint16_t tmp_value = (pattern_value + rand_value) / 128;
+
+  // quantize
+  uint16_t base_value = tmp_value / 8 * 8;
+  int upper_value = tmp_value - base_value;
+  uint8_t near_minus_idx = 12;
+  uint8_t near_plus_idx = 12;
+  for (int i = upper_value; i < 8; ++i) {
+    if (current_values.scale_select & (1<<i)) {
+      near_plus_idx = i;
+      break;
+    }
   }
-  current_pitch = (uint8_t) tmp_value;
+  for (int i = upper_value; i >= 0; --i) {
+    if (current_values.scale_select & (1<<i)) {
+      near_minus_idx = i;
+      break;
+    }
+  }
+  if (near_minus_idx > near_plus_idx) {
+    tmp_value = base_value + upper_value + near_plus_idx;
+  } else {
+    tmp_value = base_value + upper_value - near_minus_idx;
+  }
+  base_value = tmp_value / 8 * 8;
+  upper_value = tmp_value - base_value;
+
+  uint8_t current_pitch_tmp = (base_value/8*12) + pattern_idx_to_pitch_idx[upper_value] + current_values.scale_transpose;
+  if (current_pitch_tmp > 95) {
+    current_pitch = 95;
+  } else {
+    current_pitch = current_pitch_tmp;
+  }
 }

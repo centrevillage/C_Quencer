@@ -46,6 +46,7 @@ void loop() {
   output_led();
   if (prev_timer_count != current_timer_count) {
     output_osc(current_timer_count);
+    output_cv(current_timer_count);
     prev_timer_count = current_timer_count;
   }
 }

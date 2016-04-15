@@ -9,6 +9,7 @@
 #define BASE_HZ 440
 
 void output_osc(uint16_t timer_count);
+void output_cv(uint16_t timer_count);
 void spi_init();
 void trans_spi(char data);
 char read_spi();
