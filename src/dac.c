@@ -5,7 +5,7 @@
 
 // ピッチを1 tick = (62.5us) あたりのtable index移動量として表現 (精度を上げるため100倍してテーブルに保持)
 // C1 - B8
-static const float pitch_to_tableidx_x100[120] = {
+static const float pitch_to_table_index[120] = {
   0.1308127826502993,
   0.13859131548843603,
   0.1468323839587038,
@@ -143,26 +143,26 @@ static inline uint8_t trans_spi(uint8_t data) {
 
 void output_dac_a(uint16_t data) {
   PORTB = (PORTB & ~LDAC_SS_MASK) | LDAC_MASK;
-  trans_spi((data >> 8) | _BV(4) | _BV(5)); // OUT A, gain x1, no shutdown
+  trans_spi(((data >> 8) & 0x0F) | _BV(4) | _BV(5)); // OUT A, gain x1, no shutdown
   trans_spi(data & 0xFF);
   PORTB = (PORTB & ~LDAC_SS_MASK) | SS_MASK;
 }
 
 void output_dac_b(uint16_t data) {
   PORTB = (PORTB & ~LDAC_SS_MASK) | LDAC_MASK;
-  trans_spi((data >> 8) | _BV(7) | _BV(4) | _BV(5)); // OUT B, gain x1, no shutdown
+  trans_spi(((data >> 8) & 0x0F) | _BV(7) | _BV(4) | _BV(5)); // OUT B, gain x1, no shutdown
   trans_spi(data & 0xFF);
   PORTB = (PORTB & ~LDAC_SS_MASK) | SS_MASK;
 }
 
-//C0- B7 = 0 - 96
-//A3(45) = 440
+//C0- B9 = 0 - 119
+//A5(69) = 440
 //1 timer count = 16kHz = 1/ 16000 s = 62.5us / 1 cycle
 // ldac_pin = PB1
 // ss_pin = PB0
 void output_osc(uint16_t timer_count) {
-  uint8_t wavetable_idx = 0; // TODO: select other wavetable!
-  uint8_t current_table_index = (uint8_t)((uint16_t)(pitch_to_tableidx_x100[current_pitch]*timer_count/100.0)%256);
+  uint8_t wavetable_idx = 0; // TODO: can select other wavetable!
+  uint8_t current_table_index = (uint8_t)((uint16_t)(pitch_to_table_index[current_pitch]*timer_count/100.0)%256);
   uint16_t current_value = wavetables[wavetable_idx][current_table_index];
   output_dac_a(current_value*4);
 }

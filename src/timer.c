@@ -68,15 +68,6 @@ void stop_seq() {
   TCCR1B &= ~(1<<CS12) | (1<<CS10);
 }
 
-unsigned long millis() {
-  cli();
-  // 1.tick == 16msec
-  const uint8_t mhz = (F_CPU / 1000000);
-  unsigned long mmsec = current_wrap_count * mhz + (TCNT2 * mhz / 256);
-  sei();
-  return mmsec;
-}
-
 unsigned long ticks() {
   cli();
   unsigned long ticks = current_wrap_count * 256 + TCNT2;

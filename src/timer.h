@@ -9,7 +9,6 @@ void start_gate_timer();
 void update_step_time();
 void start_seq();
 void stop_seq();
-unsigned long millis();
 unsigned long ticks();
 
 extern volatile unsigned long current_wrap_count;
