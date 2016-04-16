@@ -10,8 +10,9 @@ static uint16_t pitch_to_tableidx_x100[96] = {
 };
 
 void spi_init() {
-  //Enable SPI, Master, set clock rate fck/16
-  SPCR = (1<<SPE)|(1<<MSTR)|(1<<SPR0);
+  //Enable SPI, Master, set clock rate fck/64 = 250kHz
+  SPCR = (1<<SPE)|(1<<MSTR)|(1<<SPR1);
+  SPSR = 0x00;
 }
 
 void trans_spi(char data) {

@@ -1,9 +1,5 @@
 #include <avr/io.h>
 #include <string.h>
-#include <util/delay.h>
-#include <avr/interrupt.h>
-#include <stdlib.h>
-#include <avr/eeprom.h>
 
 #include "timer.h"
 #include "dac.h"
