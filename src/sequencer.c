@@ -3,6 +3,7 @@
 #include "timer.h"
 #include "euclid.h"
 #include "pattern.h"
+#include <avr/pgmspace.h>
 
 volatile unsigned char active_seq[16] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 volatile uint8_t current_step = 0;
@@ -58,7 +59,7 @@ void set_step_interval(uint16_t tick) {
 }
 
 void update_seq_pattern() {
-  uint16_t euclid_seq = euclid_seq_table[current_values.v.step_length-1][current_values.v.step_fill];
+  uint16_t euclid_seq = pgm_read_byte(&(euclid_seq_table[current_values.v.step_length-1][current_values.v.step_fill]));
   for (int i = current_values.v.step_rot % current_values.v.step_length, j = 0; j < current_values.v.step_length; i = (i+1) % current_values.v.step_length, ++j) {
     active_seq[j] = euclid_seq & (1<<i);
   }
@@ -82,7 +83,7 @@ static const uint8_t pattern_idx_to_pitch_idx[8] = {0, 2, 4, 5, 6, 7, 9, 11};
 uint8_t prev_pitch = 255;
 void update_pitch() {
   prev_pitch = current_pitch;
-  long pattern_value = (scale_patterns[current_values.v.scale_pattern][current_step] - 8) * current_values.v.scale_range;
+  long pattern_value = (pgm_read_byte(&(scale_patterns[current_values.v.scale_pattern][current_step])) - 8) * current_values.v.scale_range;
   long rand_value = (uint8_t)(((int)current_values.v.scale_pattern_random * (int)((rand() >> 8) - 127))/16);
   long tmp_value_long = (pattern_value + rand_value);
   if (tmp_value_long < 0) {

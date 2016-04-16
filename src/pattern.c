@@ -1,6 +1,7 @@
 #include "pattern.h"
+#include <avr/pgmspace.h>
 
-const uint8_t scale_patterns[16][16] = {
+const uint8_t scale_patterns[16][16] PROGMEM = {
   // up
   {
     0,

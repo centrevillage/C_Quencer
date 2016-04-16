@@ -4,9 +4,11 @@
 #include "wavetable.h"
 #include "slide_table.h"
 
+#include <avr/pgmspace.h>
+
 // ピッチを1 tick(timer1) = (16us) あたりのtable index移動量として表現
 // C1 - B8
-static const float pitch_to_table_index[120] = {
+static const float pitch_to_table_index[120] PROGMEM = {
   0.033488072358476624,
   0.03547937676503962,
   0.03758909029342817,
@@ -162,20 +164,20 @@ void output_dac_b(uint16_t data) {
 // ldac_pin = PB1
 // ss_pin = PB0
 void output_osc(uint16_t timer_count) {
-  float current_idx = pitch_to_table_index[current_pitch];
+  float current_idx = pgm_read_byte(&(pitch_to_table_index[current_pitch]));
   if (current_values.v.slide > 0 && prev_pitch < 120) {
-    float prev_idx = pitch_to_table_index[prev_pitch];
+    float prev_idx = pgm_read_byte(&(pitch_to_table_index[prev_pitch]));
     if (prev_idx != current_idx) {
       uint16_t slide_count = (prev_idx < current_idx) ? ((uint16_t)current_values.v.slide * 32) : ((uint16_t)current_values.v.slide * 48);
       if (slide_count > timer_count) {
         float rate = ((float)timer_count/(float)slide_count);
-        rate = slide_table[(uint8_t)(rate * 256)];
+        rate = pgm_read_byte(&(slide_table[(uint8_t)(rate * 256)]));
         current_idx = (current_idx - prev_idx) * rate + prev_idx;
       }
     }
   }
   uint8_t current_table_index = (uint8_t)((uint16_t)(current_idx*timer_count)%256);
-  uint16_t current_value = wavetables[selected_wavetable_type][current_table_index];
+  uint16_t current_value = pgm_read_byte(&(wavetables[selected_wavetable_type][current_table_index]));
   output_dac_a(current_value*16);
 }
 

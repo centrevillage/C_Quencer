@@ -1,6 +1,7 @@
 #include "slide_table.h"
+#include <avr/pgmspace.h>
 
-const float slide_table[256] = {
+const float slide_table[256] PROGMEM  = {
   0.12482481998286134,
   0.19784265883210406,
   0.24964963996572268,

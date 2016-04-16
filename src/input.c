@@ -332,11 +332,11 @@ void record_current_knob_values() {
   }
 
   record_pos++;
-  if (record_pos >= 128) {
+  if (record_pos >= 64) {
     record_pos = 0;
   }
 
-  if (record_length < 128) {
+  if (record_length < 64) {
     record_length++;  
   }
 }
@@ -349,7 +349,7 @@ void start_recording() {
 void end_recording() {
   record_end = record_pos;
   int record_start_tmp = record_end - record_length;
-  record_start = (uint8_t)(record_start_tmp < 0 ? (record_start_tmp + 128) : record_start_tmp);
+  record_start = (uint8_t)(record_start_tmp < 0 ? (record_start_tmp + 64) : record_start_tmp);
 }
 
 void play_recorded_knob_values() {
@@ -361,8 +361,8 @@ void play_recorded_knob_values() {
 }
 
 void clear_recording() {
-  memset(&recorded_values, 0, sizeof(ControllerValue) * 128);
-  memset(&recorded_value_flags, 0, sizeof(ControllerValue) * 128);
+  memset(&recorded_values, 0, sizeof(ControllerValue) * 64);
+  memset(&recorded_value_flags, 0, sizeof(ControllerValue) * 64);
 }
 
 void reset_all_input() {
@@ -390,6 +390,6 @@ void reset_all_input() {
   memset(knob_values, 0, 4);
   memset(button_state, 0, 4);
   memset(&changed_value_flags, 0, sizeof(ControllerValue));
-  memset(&recorded_values, 0, sizeof(ControllerValue) * 128);
-  memset(&recorded_value_flags, 0, sizeof(ControllerValue) * 128);
+  memset(&recorded_values, 0, sizeof(ControllerValue) * 64);
+  memset(&recorded_value_flags, 0, sizeof(ControllerValue) * 64);
 }

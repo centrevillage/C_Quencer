@@ -1,6 +1,7 @@
 #include "euclid.h"
+#include <avr/pgmspace.h>
 
-const uint16_t euclid_seq_table[16][16] = {
+const uint16_t euclid_seq_table[16][16] PROGMEM = {
   {
     0b0000000000000001,
     0b0000000000000001,

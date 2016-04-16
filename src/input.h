@@ -57,8 +57,8 @@ typedef struct {
 extern volatile ControllerState current_state;
 extern volatile ButtonHistory button_history;
 
-volatile ControllerValue recorded_values[128];
-volatile ControllerValue recorded_value_flags[128]; // 0 = not recorded, 1 = recorded
+volatile ControllerValue recorded_values[64];
+volatile ControllerValue recorded_value_flags[64]; // 0 = not recorded, 1 = recorded
 volatile ControllerValue changed_value_flags; // 0 = not changed, 1 = changed
 
 
