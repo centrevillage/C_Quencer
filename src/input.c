@@ -211,7 +211,7 @@ void press(uint8_t button_idx) {
             }
           } else {
             if (is_multi_tap(button_idx, 2)) {
-              set_step_interval(button_history.interval_tick / 4);
+              set_step_interval(button_history.interval_tick);
             }
           }
       }

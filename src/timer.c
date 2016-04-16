@@ -51,6 +51,7 @@ ISR (TIMER0_OVF_vect) {
 // step timer interrupt
 ISR (TIMER1_COMPA_vect) {
   step_seq();
+  update_step_time();
 }
 
 volatile unsigned long current_wrap_count = 0L;
@@ -61,11 +62,11 @@ ISR (TIMER2_OVF_vect) {
 }
 
 void start_seq() {
-  TCCR1B |= (1<<CS12) | (1<<CS10); // divide 1024
+  TCCR1B |= (1<<CS12); // divide 256
 }
 
 void stop_seq() {
-  TCCR1B &= ~(1<<CS12) | (1<<CS10);
+  TCCR1B &= ~(1<<CS12);
 }
 
 unsigned long ticks() {
