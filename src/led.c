@@ -3,7 +3,7 @@
 #include "timer.h"
 #include "input.h"
 
-static enum DisplayMode display_mode = SEQ;
+static volatile enum DisplayMode display_mode = SEQ;
 static volatile uint8_t led_count = 0;
 static volatile long last_led_disp_tick = 0;
 

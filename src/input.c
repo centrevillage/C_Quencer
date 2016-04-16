@@ -323,10 +323,10 @@ ISR(PCINT1_vect) {
 };
 
 
-static uint8_t record_start = 0;
-static uint8_t record_end = 0;
-static uint8_t record_length = 0;
-static uint8_t record_pos = 0;
+static volatile uint8_t record_start = 0;
+static volatile uint8_t record_end = 0;
+static volatile uint8_t record_length = 0;
+static volatile uint8_t record_pos = 0;
 void record_current_knob_values() {
   for (int i = 0; i < sizeof(ControllerValue); ++i) {
     if (changed_value_flags.values[i]) {
@@ -365,8 +365,6 @@ void play_recorded_knob_values() {
 }
 
 void clear_recording() {
-  for (int i = 0; i < 128; ++i) {
-    memset(&recorded_values[i], 0, sizeof(ControllerValue));
-    memset(&recorded_value_flags[i], 0, sizeof(ControllerValue));
-  }
+  memset(&recorded_values, 0, sizeof(ControllerValue) * 128);
+  memset(&recorded_value_flags, 0, sizeof(ControllerValue) * 128);
 }

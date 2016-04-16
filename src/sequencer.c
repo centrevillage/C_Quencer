@@ -73,7 +73,7 @@ void randomize_seq() {
 }
 
 //CDEFF#GAB = 0 2 4 5 6 7 9 11 
-static uint8_t pattern_idx_to_pitch_idx[8] = {0, 2, 4, 5, 6, 7, 9, 11};
+static const uint8_t pattern_idx_to_pitch_idx[8] = {0, 2, 4, 5, 6, 7, 9, 11};
 
 void update_pitch() {
   long pattern_value = (scale_patterns[current_values.v.scale_pattern][current_step] - 8) * current_values.v.scale_range;

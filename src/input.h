@@ -56,9 +56,9 @@ struct ButtonHistory {
 
 extern volatile struct ButtonHistory button_history;
 
-ControllerValue recorded_values[128];
-ControllerValue recorded_value_flags[128]; // 0 = not recorded, 1 = recorded
-ControllerValue changed_value_flags; // 0 = not changed, 1 = changed
+volatile ControllerValue recorded_values[128];
+volatile ControllerValue recorded_value_flags[128]; // 0 = not recorded, 1 = recorded
+volatile ControllerValue changed_value_flags; // 0 = not changed, 1 = changed
 
 
 volatile uint8_t knob_values[4];
