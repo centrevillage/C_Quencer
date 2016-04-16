@@ -6,7 +6,7 @@
 
 volatile unsigned char active_seq[16] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 volatile uint8_t current_step = 0;
-// 1 tick(timer1) = 15.625usec,  2sec / 15.625usec / 16 = 8000L;
+// 1 tick(timer1) = 16 usec, 120 BPM = 2sec / 16 usec / 16 = 7812.5 tick;
 volatile uint16_t step_interval = 8000L;
 volatile uint8_t  divide_count = 1;
 volatile uint8_t  divide_idx = 1;
