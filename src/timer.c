@@ -37,7 +37,16 @@ void start_gate_timer() {
 }
 
 void update_step_time() {
-  OCR1A = step_interval;
+  if (current_values.v.swing > 0) {
+    uint16_t offset_interval = ((long)step_interval * current_values.v.swing) / 255 / 2;
+    if (current_step % 2 == 0) {
+      OCR1A = step_interval + offset_interval;
+    } else {
+      OCR1A = step_interval - offset_interval;
+    }
+  } else {
+    OCR1A = step_interval;
+  }
 }
 
 // gate timer interrupt
