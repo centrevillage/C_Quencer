@@ -6,7 +6,7 @@
 #include <avr/eeprom.h>
 
 #include "timer.h"
-#include "dac.h"
+#include "dac.h"
 #include "adc.h"
 #include "sequencer.h"
 #include "input.h"
