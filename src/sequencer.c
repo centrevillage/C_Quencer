@@ -35,7 +35,7 @@ void step_seq() {
   update_pitch();
   start_gate_timer();
 
-  memset(&changed_value_flags, 0, sizeof(ControllerValue));
+  memset((ControllerValue*)&changed_value_flags, 0, sizeof(ControllerValue));
 }
 
 void reset_seq() {

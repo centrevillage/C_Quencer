@@ -12,14 +12,14 @@ extern volatile enum RecMode rec_mode;
 enum FuncMode {NONE, FUNC, HID};
 extern volatile enum FuncMode func_mode;
 
-union ControllerState {
+typedef struct {
   uint8_t rec;   // on recording
   uint8_t start; // on sequence running
   uint8_t func;   // on sub function
   uint8_t hid;   // on hidden function
   uint8_t func_lock; // on sub function lock
   uint8_t data;
-};
+} ControllerState;
 
 enum FuncMode get_func_mode();
 
@@ -46,15 +46,16 @@ typedef union {
 
 extern volatile ControllerValue current_values;
 
-struct ButtonHistory {
+typedef struct {
   enum FuncMode mode; 
   uint8_t button_idx;
   uint8_t count;
   unsigned long last_tick;
   uint16_t interval_tick;
-};
+} ButtonHistory;
 
-extern volatile struct ButtonHistory button_history;
+extern volatile ControllerState current_state;
+extern volatile ButtonHistory button_history;
 
 volatile ControllerValue recorded_values[128];
 volatile ControllerValue recorded_value_flags[128]; // 0 = not recorded, 1 = recorded

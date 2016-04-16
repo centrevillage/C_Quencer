@@ -9,8 +9,8 @@ volatile ControllerValue current_values;
 volatile enum RecMode  rec_mode = STOP;
 volatile enum FuncMode func_mode = NONE;
 
-volatile static union ControllerState current_state;
-volatile struct ButtonHistory button_history;
+volatile ControllerState current_state;
+volatile ButtonHistory button_history;
 
 // input task
 void read_knob_values() {
@@ -150,7 +150,7 @@ uint8_t is_multi_tap(uint8_t button_idx, uint8_t count) {
 }
 
 void press(uint8_t button_idx) {
-  struct ButtonHistory prev_button_history = button_history;
+  ButtonHistory prev_button_history = button_history;
   update_button_history(button_idx);
 
   switch(button_idx) {

@@ -62,11 +62,13 @@ ISR (TIMER2_OVF_vect) {
 }
 
 void start_seq() {
+  TCNT1 = 0;
   TCCR1B |= (1<<CS12); // divide 256
 }
 
 void stop_seq() {
   TCCR1B &= ~(1<<CS12);
+  TCNT1 = 0;
 }
 
 unsigned long ticks() {
