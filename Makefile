@@ -177,7 +177,7 @@ extcoff: $(TARGET).elf
 
 # Program the device.  
 program: $(TARGET).hex $(TARGET).eep
-	$(AVRDUDE) $(AVRDUDE_FLAGS) $(AVRDUDE_WRITE_FLASH) -b $(BAUDRATE) $(AVRDUDE_WRITE_EEPROM) -vvvv
+	$(AVRDUDE) $(AVRDUDE_FLAGS) $(AVRDUDE_WRITE_FLASH) -b $(BAUDRATE) $(AVRDUDE_WRITE_EEPROM) -v
 
 # Create final output files (.hex, .eep) from ELF output file.
 %.hex: %.elf
