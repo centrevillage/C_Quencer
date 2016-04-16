@@ -12,8 +12,7 @@ void output_osc(uint16_t timer_count);
 void output_cv(uint16_t timer_count);
 void spi_init();
 void trans_spi(char data);
-char read_spi();
 
-static uint16_t pitch_to_tableidx_x100[96];
+static float pitch_to_tableidx_x100[120];
 
 #endif /* CQ_DAC_H_ */

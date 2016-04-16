@@ -106,8 +106,8 @@ void update_pitch() {
   upper_value = tmp_value - base_value;
 
   uint8_t current_pitch_tmp = (base_value/8*12) + pattern_idx_to_pitch_idx[upper_value] + current_values.v.scale_transpose;
-  if (current_pitch_tmp > 95) {
-    current_pitch = 95;
+  if (current_pitch_tmp > 119) {
+    current_pitch = 119;
   } else {
     current_pitch = current_pitch_tmp;
   }
