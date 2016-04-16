@@ -1,5 +1,6 @@
 #include "timer.h"
 #include "sequencer.h"
+#include "input.h"
 
 // Timer setting
 // timer0: gate length timer
@@ -50,8 +51,10 @@ ISR (TIMER0_OVF_vect) {
 
 // step timer interrupt
 ISR (TIMER1_COMPA_vect) {
-  step_seq();
-  update_step_time();
+  if (current_state.start) {
+    step_seq();
+    update_step_time();
+  }
 }
 
 volatile unsigned long current_wrap_count = 0L;
@@ -59,6 +62,13 @@ ISR (TIMER2_OVF_vect) {
   cli();
   ++current_wrap_count;
   sei();
+}
+
+// trig in when stop sequence
+void start_trigger() {
+  TCNT1 = 0;
+  TCCR1B |= (1<<CS12); // divide 256
+  OCR1A = 0xFFFF;
 }
 
 void start_seq() {
