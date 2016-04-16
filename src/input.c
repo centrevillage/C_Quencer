@@ -226,12 +226,29 @@ void press(uint8_t button_idx) {
           current_state.hid = 1;
         } else {
           if (func_mode == FUNC) {
-            rec_mode = STOP;
+            switch (rec_mode) {
+              case STOP:
+                rec_mode = PLAY;
+                break;
+              case PLAY:
+                rec_mode = STOP;
+                break;
+              case REC:
+                clear_recording();
+                break;
+              default:
+                break;
+            }
           } else {
             if (!current_state.rec) {
+              if (rec_mode == STOP) {
+                clear_recording();
+              }
               rec_mode = REC;
+              start_recording();
             } else {
               rec_mode = PLAY;
+              end_recording();
             }
             current_state.rec = !current_state.rec;
           }
@@ -305,6 +322,10 @@ ISR(PCINT1_vect) {
   return;	
 };
 
+
+static uint8_t record_start = 0;
+static uint8_t record_end = 0;
+static uint8_t record_length = 0;
 static uint8_t record_pos = 0;
 void record_current_knob_values() {
   for (int i = 0; i < sizeof(ControllerValue); ++i) {
@@ -315,5 +336,37 @@ void record_current_knob_values() {
   }
 
   record_pos++;
-  memset(&changed_value_flags, 0, sizeof(ControllerValue));
+  if (record_pos >= 128) {
+    record_pos = 0;
+  }
+
+  if (record_length < 128) {
+    record_length++;  
+  }
+}
+
+void start_recording() {
+  record_start = record_pos;
+  record_length = 0;  
+}
+
+void end_recording() {
+  record_end = record_pos;
+  int record_start_tmp = record_end - record_length;
+  record_start = (uint8_t)(record_start_tmp < 0 ? (record_start_tmp + 128) : record_start_tmp);
+}
+
+void play_recorded_knob_values() {
+  for (int i = 0; i < sizeof(ControllerValue); ++i) {
+    if (!changed_value_flags.values[i] && recorded_value_flags[record_pos].values[i]) {
+      current_values.values[i] = recorded_values[record_pos].values[i];
+    }
+  }
+}
+
+void clear_recording() {
+  for (int i = 0; i < 128; ++i) {
+    memset(&recorded_values[i], 0, sizeof(ControllerValue));
+    memset(&recorded_value_flags[i], 0, sizeof(ControllerValue));
+  }
 }

@@ -70,6 +70,10 @@ uint8_t func_on();
 uint8_t hid_on();
 void press(uint8_t button_idx);
 void record_current_knob_values();
+void start_recording();
+void end_recording();
+void clear_recording();
+void play_recorded_knob_values();
 
 
 #endif /* CQ_INPUT_H_ */

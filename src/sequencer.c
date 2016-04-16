@@ -26,11 +26,16 @@ void step_seq() {
     update_seq_pattern();
   }
   read_knob_values();
-  if (rec_mode == REC) {
-    record_current_knob_values();
+  if (rec_mode == PLAY || rec_mode == REC) {
+    play_recorded_knob_values();
+    if (rec_mode == REC) {
+      record_current_knob_values();
+    }
   }
   update_pitch();
   start_gate_timer();
+
+  memset(&changed_value_flags, 0, sizeof(ControllerValue));
 }
 
 void reset_seq() {
