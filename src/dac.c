@@ -5,7 +5,7 @@
 
 // ピッチを1 tick = (62.5us) あたりのtable index移動量として表現 (精度を上げるため100倍してテーブルに保持)
 // C1 - B8
-static float pitch_to_tableidx_x100[120] = {
+static const float pitch_to_tableidx_x100[120] = {
   0.1308127826502993,
   0.13859131548843603,
   0.1468323839587038,
@@ -134,11 +134,11 @@ void spi_init() {
   SPSR = 0x00;
 }
 
-void trans_spi(char data) {
-   //Start transmission
-   SPDR = data;
-   // Wait for transmission complete
-   while(!(SPSR & (1<<SPIF)));
+static inline uint8_t trans_spi(uint8_t data) {
+  SPDR = data;
+  loop_until_bit_is_set(SPSR, SPIF);
+  data = SPDR;
+  return(data);
 }
 
 void output_dac_a(uint16_t data) {
