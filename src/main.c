@@ -27,6 +27,7 @@ void setup() {
 
   // initialize pin
   setup_pins();
+  reset_all_input();
 
   adc_init();
   spi_init();

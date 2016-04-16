@@ -364,3 +364,32 @@ void clear_recording() {
   memset(&recorded_values, 0, sizeof(ControllerValue) * 128);
   memset(&recorded_value_flags, 0, sizeof(ControllerValue) * 128);
 }
+
+void reset_all_input() {
+  current_values.v.step_fill = 0;
+  current_values.v.step_length = 16;
+  current_values.v.step_rot = 0;
+  current_values.v.step_rand = 0;
+  current_values.v.scale_select = 127;
+  current_values.v.scale_shift = 32;
+  current_values.v.scale_pattern = 0;
+  current_values.v.scale_transpose = 38;
+  current_values.v.scale_range = 128;
+  current_values.v.scale_pattern_random = 0;
+  current_values.v.glide = 0;
+  current_values.v.swing = 0;
+
+  record_start = 0;
+  record_end = 0;
+  record_length = 0;
+  record_pos = 0;
+  rec_mode = STOP;
+  func_mode = NONE;
+  button_history.mode = NONE;
+  button_history.button_idx = 5;
+  memset(knob_values, 0, 4);
+  memset(button_state, 0, 4);
+  memset(&changed_value_flags, 0, sizeof(ControllerValue));
+  memset(&recorded_values, 0, sizeof(ControllerValue) * 128);
+  memset(&recorded_value_flags, 0, sizeof(ControllerValue) * 128);
+}
