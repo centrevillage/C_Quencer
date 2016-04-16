@@ -18,7 +18,7 @@ void read_knob_values() {
     uint8_t new_value = adc_read(i);
     if (new_value != knob_values[i]) {
       set_current_value(new_value, i); 
-      knob_values[i] = adc_read(i);
+      knob_values[i] = new_value;
     }
   } 
 }
@@ -29,19 +29,21 @@ void set_current_value(uint8_t value, uint8_t knob_idx) {
     case 0: // fill / len / glide
       switch (func_mode) {
         case NONE:
-          current_values.v.step_length = ((value & 0xF0) >> 4) + 1;
-          changed_value_flags.v.step_length = 1;
+          current_values.v.step_fill = ((value & 0xF0) >> 4);
+          changed_value_flags.v.step_fill = 1;
           is_change_seq = 1;
           break;
         case FUNC:
-          current_values.v.step_fill = ((value & 0xF0) >> 4) + 1;
-          changed_value_flags.v.step_fill = 1;
+          current_values.v.step_length = ((value & 0xF0) >> 4) + 1;
+          changed_value_flags.v.step_length = 1;
           is_change_seq = 1;
           break;
         case HID:
           current_values.v.glide = value;
           changed_value_flags.v.glide = 1;
           set_led_count(((value & 0xF0) >> 4) + 1);
+          break;
+        default:
           break;
       }
       break;
@@ -73,13 +75,13 @@ void set_current_value(uint8_t value, uint8_t knob_idx) {
           set_display_mode(SCALE);
           break;
         case FUNC:
-          current_values.v.scale_transpose = (uint8_t)(((uint16_t)value) * 95 / 255);
+          current_values.v.scale_transpose = (uint16_t)value * 76 / 256;
           changed_value_flags.v.scale_transpose = 1;
           set_led_count(((value & 0xF0) >> 4) + 1);
           break;
         case HID:
-          current_values.v.scale_select_random = (value & 0xF0) >> 4;
-          changed_value_flags.v.scale_select_random = 1;
+          current_values.v.scale_shift = value / 4;
+          changed_value_flags.v.scale_shift = 1;
           set_led_count(((value & 0xF0) >> 4) + 1);
           break;
       }
@@ -87,7 +89,7 @@ void set_current_value(uint8_t value, uint8_t knob_idx) {
     case 3: // scale pattern / scale range / scale pattern random
       switch (func_mode) {
         case NONE:
-          current_values.v.scale_pattern = value ;
+          current_values.v.scale_pattern = (value & 0xF0) >> 4;
           changed_value_flags.v.scale_pattern = 1;
           set_led_count(((value & 0xF0) >> 4) + 1);
           break;
@@ -120,15 +122,6 @@ enum FuncMode get_func_mode() {
   return NONE;
 }
 
-
-uint8_t func_on() {
-  return current_state.func_lock ^ current_state.func;
-}
-
-uint8_t hid_on() {
-  return current_state.hid;
-}
-
 void reset_button_history(uint8_t button_idx) {
     unsigned long t = ticks();
     enum FuncMode mode = get_func_mode();
@@ -141,7 +134,7 @@ void reset_button_history(uint8_t button_idx) {
 
 void update_button_history(uint8_t button_idx) {
   enum FuncMode mode = get_func_mode();
-  if (button_history.mode == mode) {
+  if (button_history.mode == mode && button_history.button_idx == button_idx) {
     unsigned long t = ticks();
     button_history.button_idx = button_idx;
     button_history.count += 1;

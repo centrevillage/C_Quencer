@@ -34,9 +34,9 @@ typedef union {
     uint8_t step_rot;
     uint8_t step_rand;
     uint8_t scale_select;
-    uint8_t scale_select_random;
+    uint8_t scale_shift;
     uint8_t scale_pattern;
-    uint8_t scale_transpose; // scale_transpose = 0: C1 - 95: B8 
+    uint8_t scale_transpose;
     uint8_t scale_range;
     uint8_t scale_pattern_random;
     uint8_t glide;
@@ -66,8 +66,6 @@ volatile uint8_t button_state[4];
 
 void read_knob_values();
 void set_current_value(uint8_t value, uint8_t knob_idx);
-uint8_t func_on();
-uint8_t hid_on();
 void press(uint8_t button_idx);
 void record_current_knob_values();
 void start_recording();

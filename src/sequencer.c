@@ -54,7 +54,7 @@ void set_step_interval(uint16_t tick) {
 }
 
 void update_seq_pattern() {
-  uint16_t euclid_seq = euclid_seq_table[current_values.v.step_length-1][current_values.v.step_fill-1];
+  uint16_t euclid_seq = euclid_seq_table[current_values.v.step_length-1][current_values.v.step_fill];
   for (int i = current_values.v.step_rot % current_values.v.step_length, j = 0; j < current_values.v.step_length; i = (i+1) % current_values.v.step_length, ++j) {
     active_seq[j] = euclid_seq & (1<<i);
   }
@@ -77,37 +77,37 @@ static const uint8_t pattern_idx_to_pitch_idx[8] = {0, 2, 4, 5, 6, 7, 9, 11};
 
 void update_pitch() {
   long pattern_value = (scale_patterns[current_values.v.scale_pattern][current_step] - 8) * current_values.v.scale_range;
-  long rand_value = (uint8_t)(((int)current_values.v.scale_pattern_random * (int)(((rand() & 0xFF00) >> 8) - 127))/16);
-  uint16_t tmp_value = (pattern_value + rand_value) / 128;
+  long rand_value = (uint8_t)(((int)current_values.v.scale_pattern_random * (int)((rand() >> 8) - 127))/16);
+  long tmp_value_long = (pattern_value + rand_value);
+  if (tmp_value_long < 0) {
+    tmp_value_long = 0;
+  }
+  int tmp_value = ((uint16_t)tmp_value_long) / 128 + current_values.v.scale_shift;
+  if (tmp_value < 0) {
+    tmp_value = 0;
+  }
 
   // quantize
   uint16_t base_value = tmp_value / 8 * 8;
   int upper_value = tmp_value - base_value;
-  uint8_t near_minus_idx = 12;
-  uint8_t near_plus_idx = 12;
-  for (int i = upper_value; i < 8; ++i) {
-    if (current_values.v.scale_select & (1<<i)) {
-      near_plus_idx = i;
+  for (int i = 0; i < 8; ++i) {
+    if (current_values.v.scale_select & (1<<((upper_value+i)%8))) {
+      tmp_value += i;
       break;
     }
-  }
-  for (int i = upper_value; i >= 0; --i) {
-    if (current_values.v.scale_select & (1<<i)) {
-      near_minus_idx = i;
+    if (current_values.v.scale_select & (1<<((upper_value-i)%8))) {
+      tmp_value -= i;
       break;
     }
-  }
-  if (near_minus_idx > near_plus_idx) {
-    tmp_value = base_value + upper_value + near_plus_idx;
-  } else {
-    tmp_value = base_value + upper_value - near_minus_idx;
   }
   base_value = tmp_value / 8 * 8;
   upper_value = tmp_value - base_value;
 
-  uint8_t current_pitch_tmp = (base_value/8*12) + pattern_idx_to_pitch_idx[upper_value] + current_values.v.scale_transpose;
+  int current_pitch_tmp = (base_value/8*12) + pattern_idx_to_pitch_idx[upper_value] + (current_values.v.scale_transpose - 36);
   if (current_pitch_tmp > 119) {
     current_pitch = 119;
+  } else if (current_pitch_tmp < 0) {
+    current_pitch = 0;
   } else {
     current_pitch = current_pitch_tmp;
   }
