@@ -161,9 +161,8 @@ void output_dac_b(uint16_t data) {
 // ldac_pin = PB1
 // ss_pin = PB0
 void output_osc(uint16_t timer_count) {
-  uint8_t wavetable_idx = 0; // TODO: can select other wavetable!
   uint8_t current_table_index = (uint8_t)((uint16_t)(pitch_to_table_index[current_pitch]*timer_count)%256);
-  uint16_t current_value = wavetables[wavetable_idx][current_table_index];
+  uint16_t current_value = wavetables[selected_wavetable_type][current_table_index];
   output_dac_a(current_value*16);
 }
 
