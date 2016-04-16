@@ -2,6 +2,7 @@
 #include "input.h"
 #include "sequencer.h"
 #include "wavetable.h"
+#include "slide_table.h"
 
 // ピッチを1 tick(timer1) = (16us) あたりのtable index移動量として表現
 // C1 - B8
@@ -161,7 +162,19 @@ void output_dac_b(uint16_t data) {
 // ldac_pin = PB1
 // ss_pin = PB0
 void output_osc(uint16_t timer_count) {
-  uint8_t current_table_index = (uint8_t)((uint16_t)(pitch_to_table_index[current_pitch]*timer_count)%256);
+  float current_idx = pitch_to_table_index[current_pitch];
+  if (current_values.v.slide > 0 && prev_pitch < 120) {
+    float prev_idx = pitch_to_table_index[prev_pitch];
+    if (prev_idx != current_idx) {
+      uint16_t slide_count = (prev_idx < current_idx) ? ((uint16_t)current_values.v.slide * 32) : ((uint16_t)current_values.v.slide * 48);
+      if (slide_count > timer_count) {
+        float rate = ((float)timer_count/(float)slide_count);
+        rate = slide_table[(uint8_t)(rate * 256)];
+        current_idx = (current_idx - prev_idx) * rate + prev_idx;
+      }
+    }
+  }
+  uint8_t current_table_index = (uint8_t)((uint16_t)(current_idx*timer_count)%256);
   uint16_t current_value = wavetables[selected_wavetable_type][current_table_index];
   output_dac_a(current_value*16);
 }

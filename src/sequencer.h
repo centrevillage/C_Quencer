@@ -20,5 +20,7 @@ void update_seq_pattern();
 void randomize_seq();
 void update_pitch();
 
+extern uint8_t prev_pitch;
+
 #endif /* CQ_SEQUENCER_H_ */
 

@@ -26,7 +26,7 @@ void read_knob_values() {
 void set_current_value(uint8_t value, uint8_t knob_idx) {
   uint8_t is_change_seq = 0;
   switch (knob_idx) {
-    case 0: // fill / len / glide
+    case 0: // fill / len / slide
       switch (func_mode) {
         case NONE:
           current_values.v.step_fill = ((value & 0xF0) >> 4);
@@ -39,8 +39,8 @@ void set_current_value(uint8_t value, uint8_t knob_idx) {
           is_change_seq = 1;
           break;
         case HID:
-          current_values.v.glide = value;
-          changed_value_flags.v.glide = 1;
+          current_values.v.slide = value;
+          changed_value_flags.v.slide = 1;
           set_led_count(((value & 0xF0) >> 4) + 1);
           break;
         default:
@@ -376,7 +376,7 @@ void reset_all_input() {
   current_values.v.scale_transpose = 38;
   current_values.v.scale_range = 128;
   current_values.v.scale_pattern_random = 0;
-  current_values.v.glide = 0;
+  current_values.v.slide = 0;
   current_values.v.swing = 0;
 
   record_start = 0;

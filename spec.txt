@@ -1,7 +1,7 @@
 C_Quencer 仕様
 
 input:
-  knob1: eucrid fill (A) / sequence length (B) / cv glide (C)
+  knob1: eucrid fill (A) / sequence length (B) / cv slide (C)
   knob2: pattern rotation (A) / pattern rotation random (B) / trigger swing (C)
   knob3: scale select (A) / transpose (B) / scale select random (C)
    * scale select はプリセットからスケール選択

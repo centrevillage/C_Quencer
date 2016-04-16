@@ -39,7 +39,7 @@ typedef union {
     uint8_t scale_transpose;
     uint8_t scale_range;
     uint8_t scale_pattern_random;
-    uint8_t glide;
+    uint8_t slide;
     uint8_t swing;
   } v;
 } ControllerValue;

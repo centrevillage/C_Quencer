@@ -18,6 +18,7 @@ void step_seq() {
     ++divide_idx;
     return;
   }
+  cli();
   divide_idx = 1;
   if (current_step < (current_values.v.step_length-1)) {
     ++current_step;
@@ -32,10 +33,13 @@ void step_seq() {
       record_current_knob_values();
     }
   }
-  update_pitch();
+  if (active_seq[current_step]) {
+    update_pitch();
+  }
   start_gate_timer();
 
   memset((ControllerValue*)&changed_value_flags, 0, sizeof(ControllerValue));
+  sei();
 }
 
 void reset_seq() {
@@ -75,7 +79,9 @@ void randomize_seq() {
 //CDEFF#GAB = 0 2 4 5 6 7 9 11 
 static const uint8_t pattern_idx_to_pitch_idx[8] = {0, 2, 4, 5, 6, 7, 9, 11};
 
+uint8_t prev_pitch = 255;
 void update_pitch() {
+  prev_pitch = current_pitch;
   long pattern_value = (scale_patterns[current_values.v.scale_pattern][current_step] - 8) * current_values.v.scale_range;
   long rand_value = (uint8_t)(((int)current_values.v.scale_pattern_random * (int)((rand() >> 8) - 127))/16);
   long tmp_value_long = (pattern_value + rand_value);
