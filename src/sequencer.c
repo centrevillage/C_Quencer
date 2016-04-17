@@ -104,8 +104,14 @@ void set_step_interval(uint16_t tick) {
 
 void update_seq_pattern() {
   uint16_t euclid_seq = pgm_read_word(&(euclid_seq_table[current_values.v.step_length-1][current_values.v.step_fill]));
-  for (uint8_t i = current_values.v.step_rot % current_values.v.step_length, j = 0; j < current_values.v.step_length; i = (i+1) % current_values.v.step_length, ++j) {
-    active_seq[j] = euclid_seq & (1<<i);
+  uint8_t steplen = current_values.v.step_length;
+  uint8_t steprot = current_values.v.step_rot;
+  for (int i = 0; i < 16; ++i) {
+    if (i < steplen && steprot > 0) {
+      active_seq[i] = !!(euclid_seq & (1 << ((i + steprot)%steplen)));
+    } else {
+      active_seq[i] = !!(euclid_seq & (1 << i));
+    }
   }
   randomize_seq();
 }
