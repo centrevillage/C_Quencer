@@ -164,14 +164,14 @@ void output_dac_b(uint16_t data) {
 // ldac_pin = PB1
 // ss_pin = PB0
 void output_osc(uint16_t timer_count) {
-  float current_idx = pgm_read_byte(&(pitch_to_table_index[current_pitch]));
+  float current_idx = pgm_read_float(&(pitch_to_table_index[current_pitch]));
   if (current_values.v.slide > 0 && prev_pitch < 120) {
-    float prev_idx = pgm_read_byte(&(pitch_to_table_index[prev_pitch]));
+    float prev_idx = pgm_read_float(&(pitch_to_table_index[prev_pitch]));
     if (prev_idx != current_idx) {
       uint16_t slide_count = (prev_idx < current_idx) ? ((uint16_t)current_values.v.slide * 32) : ((uint16_t)current_values.v.slide * 48);
       if (slide_count > timer_count) {
         float rate = ((float)timer_count/(float)slide_count);
-        rate = pgm_read_byte(&(slide_table[(uint8_t)(rate * 256)]));
+        rate = pgm_read_float(&(slide_table[(uint8_t)(rate * 256)]));
         current_idx = (current_idx - prev_idx) * rate + prev_idx;
       }
     }
