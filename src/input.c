@@ -12,15 +12,36 @@ volatile enum FuncMode func_mode = NONE;
 volatile ControllerState current_state;
 volatile ButtonHistory button_history;
 
+volatile static uint8_t current_knob_value_idx = 0;
+
 // input task
 void read_knob_values() {
-  for (int i = 0; i < 4; ++i) {
-    uint8_t new_value = adc_read(i);
-    if (new_value != knob_values[i]) {
-      set_current_value(new_value, i); 
-      knob_values[i] = new_value;
+  uint16_t prev_value;
+  uint16_t new_value;
+
+  cli();
+
+  for (uint8_t i = 0; i < 4; ++i) {
+    prev_value = 0;
+    for (uint8_t j = 0; j < 8; ++j) {
+      prev_value += knob_values[i][j];
+    }
+    prev_value = prev_value / 8;
+    new_value = 0;
+    knob_values[i][current_knob_value_idx] = 255 - adc_read(i);
+    for (uint8_t j = 0; j < 8; ++j) {
+      new_value += knob_values[i][j];
+    }
+    new_value = new_value / 8;
+    if (new_value != prev_value) {
+      set_current_value((uint8_t)new_value, i); 
     }
   } 
+  ++current_knob_value_idx;
+  if (current_knob_value_idx >= 8) {
+    current_knob_value_idx = 0;
+  }
+  sei();
 }
 
 void set_current_value(uint8_t value, uint8_t knob_idx) {
@@ -109,6 +130,7 @@ void set_current_value(uint8_t value, uint8_t knob_idx) {
       break;
   }
   if (is_change_seq) {
+    set_display_mode(SEQ);
     update_seq_pattern();
   }
 }
@@ -366,7 +388,7 @@ void clear_recording() {
 }
 
 void reset_all_input() {
-  current_values.v.step_fill = 0;
+  current_values.v.step_fill = 4;
   current_values.v.step_length = 16;
   current_values.v.step_rot = 0;
   current_values.v.step_rand = 0;
@@ -387,7 +409,7 @@ void reset_all_input() {
   func_mode = NONE;
   button_history.mode = NONE;
   button_history.button_idx = 5;
-  memset(knob_values, 0, 4);
+  memset(knob_values, 0, 4*8);
   memset(button_state, 0, 4);
   memset(&changed_value_flags, 0, sizeof(ControllerValue));
   memset(&recorded_values, 0, sizeof(ControllerValue) * 64);

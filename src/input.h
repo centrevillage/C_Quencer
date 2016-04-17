@@ -62,8 +62,8 @@ volatile ControllerValue recorded_value_flags[64]; // 0 = not recorded, 1 = reco
 volatile ControllerValue changed_value_flags; // 0 = not changed, 1 = changed
 
 
-volatile uint8_t knob_values[4];
-volatile uint8_t button_state[4];
+volatile static uint8_t knob_values[4][8];
+volatile static uint8_t button_state[4];
 
 void read_knob_values();
 void set_current_value(uint8_t value, uint8_t knob_idx);
