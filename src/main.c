@@ -47,7 +47,9 @@ void loop() {
   sei();
   output_led();
   if (prev_timer_count != current_timer_count) {
-    output_osc(current_timer_count);
+    if (active_seq[current_step]) {
+      output_osc(current_timer_count);
+    }
     output_cv(current_timer_count);
     prev_timer_count = current_timer_count;
   }
