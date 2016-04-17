@@ -20,6 +20,12 @@ void update_seq_pattern();
 void randomize_seq();
 void update_pitch();
 
+void start_gate_timer();
+void update_step_time();
+void start_trigger();
+void start_seq();
+void stop_seq();
+
 extern uint8_t prev_pitch;
 
 #endif /* CQ_SEQUENCER_H_ */

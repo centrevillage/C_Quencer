@@ -19,8 +19,6 @@ void read_knob_values() {
   uint16_t prev_value;
   uint16_t new_value;
 
-  cli();
-
   for (uint8_t i = 0; i < 4; ++i) {
     prev_value = 0;
     for (uint8_t j = 0; j < 8; ++j) {
@@ -41,7 +39,6 @@ void read_knob_values() {
   if (current_knob_value_idx >= 8) {
     current_knob_value_idx = 0;
   }
-  sei();
 }
 
 void set_current_value(uint8_t value, uint8_t knob_idx) {

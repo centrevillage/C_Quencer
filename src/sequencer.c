@@ -43,8 +43,52 @@ void step_seq() {
   sei();
 }
 
+// trig in when stop sequence
+void start_trigger() {
+  TCNT1 = 0;
+  TCCR1B |= (1<<CS12); // divide 256
+  OCR1A = 0xFFFF;
+}
+
+void start_seq() {
+  TCNT1 = 0;
+  TCCR1B |= (1<<CS12); // divide 256
+}
+
+void stop_seq() {
+  TCCR1B &= ~(1<<CS12);
+  TCNT1 = 0;
+}
+
 void reset_seq() {
   current_step = 16; // next -> 0
+}
+
+void start_gate_timer() {
+  //reset timer counter
+  TCNT0 = 0; 
+  //start timer
+  TCCR0B |= (1<<CS02) | (1<<CS00); // divide 1024
+  
+  if (active_seq[current_step]) {
+    //gate on
+    PORTB &= ~_BV(2);
+  }
+
+  active_step_gate = 1;
+}
+
+void update_step_time() {
+  if (current_values.v.swing > 0) {
+    uint16_t offset_interval = ((long)step_interval * current_values.v.swing) / 255 / 2;
+    if (current_step % 2 == 0) {
+      OCR1A = step_interval + offset_interval;
+    } else {
+      OCR1A = step_interval - offset_interval;
+    }
+  } else {
+    OCR1A = step_interval;
+  }
 }
 
 void set_divide(uint8_t divide) {

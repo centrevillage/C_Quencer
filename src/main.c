@@ -19,6 +19,11 @@ void setup_pins() {
   DDRC = 0;
   // switch with pullup
   PORTC = _BV(5);
+
+  // pin interrupt for PC and PD ports
+  PCICR = _BV(PCIE1) | _BV(PCIE2);
+  PCMSK1 = _BV(PCINT12) | _BV(PCINT13);
+  PCMSK2 = _BV(PCINT21) | _BV(PCINT22) | _BV(PCINT23); 
 }
 
 // the setup function runs once when you press reset or power the board
@@ -46,6 +51,8 @@ void loop() {
     output_cv(current_timer_count);
     prev_timer_count = current_timer_count;
   }
+
+  read_knob_values();
 }
 
 // from Arduino ==
