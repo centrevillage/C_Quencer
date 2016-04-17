@@ -20,6 +20,7 @@ void timer_init() {
   // Timer 2 ==
   TCCR2A = 0; // normal mode (overflow after about 16ms)
   TIMSK2 |= (1<<TOIE0); // overflow interrupt
+  TCCR2B |= ((1<<CS02) | (1<<CS00));
 }
 
 // gate timer interrupt
@@ -44,7 +45,9 @@ ISR (TIMER2_OVF_vect) {
   cli();
   ++current_wrap_count;
   sei();
-  read_knob_values();
+  if (current_wrap_count % 16 == 0 && !current_state.start) {
+    read_knob_values();
+  }
 }
 
 unsigned long ticks() {
