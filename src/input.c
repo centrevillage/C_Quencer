@@ -174,22 +174,25 @@ void press(uint8_t button_idx) {
 
   switch(button_idx) {
     case 0:
-      if (is_multi_tap(button_idx, 2)) {
-        if (button_history.interval_tick < 8000) { // 8000 tick = 500 msec
-          // double tap = func lock
-          if (button_history.interval_tick < 100) { // 100 tick = 6.25 msec
-            // avoid fluttering
-            current_state.func = 1;
-          } else {
-            current_state.func_lock = !current_state.func_lock;
-          }
-        } else {
-          current_state.func = 1;
-        }
-        reset_button_history(button_idx);
-      } else {
-        current_state.func = 1;
-      }
+      // function lock
+      //if (is_multi_tap(button_idx, 2)) {
+      //  if (button_history.interval_tick < 8000) { // 8000 tick = 500 msec
+      //    // double tap = func lock
+      //    if (button_history.interval_tick < 100) { // 100 tick = 6.25 msec
+      //      // avoid fluttering
+      //      current_state.func = 1;
+      //    } else {
+      //      current_state.func_lock = !current_state.func_lock;
+      //    }
+      //  } else {
+      //    current_state.func = 1;
+      //  }
+      //  reset_button_history(button_idx);
+      //} else {
+      //  current_state.func = 1;
+      //}
+
+      current_state.func = 1;
       break;
     case 1:
       if (is_multi_tap(button_idx, 2) && button_history.interval_tick < 100) {
