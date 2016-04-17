@@ -75,7 +75,6 @@ void set_current_value(uint8_t value, uint8_t knob_idx) {
         case FUNC:
           current_values.v.step_rand = value / 2;
           changed_value_flags.v.step_rand = 1;
-          is_change_seq = 1;
           set_led_count(((value & 0xF0) >> 4) + 1);
           break;
         case HID:
@@ -114,7 +113,7 @@ void set_current_value(uint8_t value, uint8_t knob_idx) {
         case FUNC:
           current_values.v.scale_range = value;
           changed_value_flags.v.scale_range = 1;
-          set_led_count((value & 0xF0 >> 4) + 1);
+          set_led_count(((value & 0xF0) >> 4) + 1);
           break;
         case HID:
           current_values.v.scale_pattern_random = value;
@@ -195,7 +194,7 @@ void press(uint8_t button_idx) {
       current_state.func = 1;
       break;
     case 1:
-      if (is_multi_tap(button_idx, 2) && button_history.interval_tick < 100) {
+      if (is_multi_tap(button_idx, 2) && button_history.interval_tick < 1000) {
         // avoid fluttering
         reset_button_history(button_idx);
       } else {
@@ -213,7 +212,7 @@ void press(uint8_t button_idx) {
       }
       break;
     case 2:
-      if (is_multi_tap(button_idx, 2) && button_history.interval_tick < 100) {
+      if (is_multi_tap(button_idx, 2) && button_history.interval_tick < 1000) {
         // avoid fluttering
         button_history = prev_button_history;
       } else {
@@ -232,7 +231,7 @@ void press(uint8_t button_idx) {
       }
       break;
     case 3:
-      if (is_multi_tap(button_idx, 2) && button_history.interval_tick < 100) {
+      if (is_multi_tap(button_idx, 2) && button_history.interval_tick < 1000) {
         // avoid fluttering
         reset_button_history(button_idx);
       } else {
