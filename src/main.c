@@ -51,8 +51,6 @@ void loop() {
     output_cv(current_timer_count);
     prev_timer_count = current_timer_count;
   }
-
-  read_knob_values();
 }
 
 // from Arduino ==

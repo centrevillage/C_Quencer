@@ -44,6 +44,7 @@ ISR (TIMER2_OVF_vect) {
   cli();
   ++current_wrap_count;
   sei();
+  read_knob_values();
 }
 
 unsigned long ticks() {
