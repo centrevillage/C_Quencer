@@ -51,6 +51,7 @@ void start_trigger() {
 }
 
 void start_seq() {
+  srand(button_history.last_tick);
   TCNT1 = 0;
   TCCR1B |= (1<<CS12); // divide 256
 }
@@ -117,7 +118,6 @@ void update_seq_pattern() {
 }
 
 void randomize_seq() {
-  srand(button_history.last_tick);
   if (current_values.v.step_rand > 0) {
     for (int i = 0; i < current_values.v.step_length; ++i) {
       if ((uint8_t)(rand() >> 8) < current_values.v.step_rand) {
