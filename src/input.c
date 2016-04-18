@@ -145,7 +145,7 @@ void reset_button_history(uint8_t button_idx) {
     enum FuncMode mode = get_func_mode();
     button_history.mode = mode;
     button_history.button_idx = button_idx;
-    button_history.count = 0;
+    button_history.count = 1;
     button_history.last_tick = t;
     button_history.interval_tick = 0;
 }
@@ -169,106 +169,85 @@ uint8_t is_multi_tap(uint8_t button_idx, uint8_t count) {
 
 void press(uint8_t button_idx) {
   ButtonHistory prev_button_history = button_history;
+
   update_button_history(button_idx);
+
+  if (is_multi_tap(button_idx, 2)) {
+    if (button_history.interval_tick < 200) {
+      // avoid fluttering
+      button_history = prev_button_history;
+      return;
+    } else if (button_history.interval_tick > 262143L) {
+      // timeout multitap
+      reset_button_history(button_idx);
+    }
+  }
 
   switch(button_idx) {
     case 0:
-      // function lock
-      //if (is_multi_tap(button_idx, 2)) {
-      //  if (button_history.interval_tick < 8000) { // 8000 tick = 500 msec
-      //    // double tap = func lock
-      //    if (button_history.interval_tick < 100) { // 100 tick = 6.25 msec
-      //      // avoid fluttering
-      //      current_state.func = 1;
-      //    } else {
-      //      current_state.func_lock = !current_state.func_lock;
-      //    }
-      //  } else {
-      //    current_state.func = 1;
-      //  }
-      //  reset_button_history(button_idx);
-      //} else {
-      //  current_state.func = 1;
-      //}
-
       current_state.func = 1;
       break;
     case 1:
-      if (is_multi_tap(button_idx, 2) && button_history.interval_tick < 1000) {
-        // avoid fluttering
-        reset_button_history(button_idx);
+      if (func_mode == FUNC) {
+        reset_seq();
       } else {
-        if (func_mode == FUNC) {
-          reset_seq();
+        if (current_state.start) {
+          current_state.start = 0;
+          stop_seq();
         } else {
-          if (current_state.start) {
-            current_state.start = 0;
-            stop_seq();
-          } else {
-            current_state.start = 1;
-            start_seq();
-          }
-        } 
-      }
+          current_state.start = 1;
+          start_seq();
+        }
+      } 
       break;
     case 2:
-      if (is_multi_tap(button_idx, 2) && button_history.interval_tick < 1000) {
-        // avoid fluttering
-        button_history = prev_button_history;
+      if (func_mode == FUNC) {
+        if (is_multi_tap(button_idx, 2) && button_history.interval_tick < 65535) {
+          set_divide(button_history.count);
+        } else {
+          set_divide(1);
+          reset_button_history(button_idx);
+        }
       } else {
-          if (func_mode == FUNC) {
-            if (button_history.interval_tick < 16000) { // 16000 tick = 1000 msec
-              set_divide(button_history.count);
-            } else {
-              reset_button_history(button_idx);
-              set_divide(1);
-            }
-          } else {
-            if (is_multi_tap(button_idx, 2)) {
-              set_step_interval(button_history.interval_tick);
-            }
-          }
+        if (is_multi_tap(button_idx, 2)) {
+          set_step_interval(button_history.interval_tick/8);
+        }
       }
       break;
     case 3:
-      if (is_multi_tap(button_idx, 2) && button_history.interval_tick < 1000) {
-        // avoid fluttering
-        reset_button_history(button_idx);
+      if (button_state[2]) {
+        // TAP+REC = hidden mode
+        current_state.hid = 1;
       } else {
-        if (button_state[2]) {
-          // TAP+REC = hidden mode
-          current_state.hid = 1;
-        } else {
-          if (func_mode == FUNC) {
-            switch (rec_mode) {
-              case STOP:
-                rec_mode = PLAY;
-                break;
-              case PLAY:
-                rec_mode = STOP;
-                break;
-              case REC:
-                clear_recording();
-                break;
-              default:
-                break;
-            }
-          } else {
-            if (!current_state.rec) {
-              if (rec_mode == STOP) {
-                clear_recording();
-              }
-              rec_mode = REC;
-              start_recording();
-            } else {
+        if (func_mode == FUNC) {
+          switch (rec_mode) {
+            case STOP:
               rec_mode = PLAY;
-              end_recording();
-            }
-            current_state.rec = !current_state.rec;
+              break;
+            case PLAY:
+              rec_mode = STOP;
+              break;
+            case REC:
+              clear_recording();
+              break;
+            default:
+              break;
           }
+        } else {
+          if (!current_state.rec) {
+            if (rec_mode == STOP) {
+              clear_recording();
+            }
+            rec_mode = REC;
+            start_recording();
+          } else {
+            rec_mode = PLAY;
+            end_recording();
+          }
+          current_state.rec = !current_state.rec;
         }
-        break;
       }
+      break;
     default:
       break;
   }

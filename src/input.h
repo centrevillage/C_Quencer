@@ -51,7 +51,7 @@ typedef struct {
   uint8_t button_idx;
   uint8_t count;
   unsigned long last_tick;
-  uint16_t interval_tick;
+  unsigned long interval_tick;
 } ButtonHistory;
 
 extern volatile ControllerState current_state;

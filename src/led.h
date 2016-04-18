@@ -4,7 +4,7 @@
 #define CQ_LED_H_
 
 #define LED_MASK 0b00011111
-#define MAX_DISPLAY_TICK_FOR_VALUE 16000
+#define MAX_DISPLAY_TICK_FOR_VALUE 65535
 
 enum DisplayMode {
   SEQ,

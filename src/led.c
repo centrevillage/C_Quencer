@@ -6,7 +6,7 @@
 
 static volatile enum DisplayMode display_mode = SEQ;
 static volatile uint8_t led_count = 0;
-static volatile long last_led_disp_tick = 0;
+static volatile unsigned long last_led_disp_tick = 0;
 
 static int g_led_i = 0;
 
