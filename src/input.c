@@ -233,7 +233,7 @@ void press(uint8_t button_idx) {
             default:
               break;
           }
-        } else {
+        } else if (func_mode == NONE) {
           if (!current_state.rec) {
             if (rec_mode == STOP) {
               clear_recording();
@@ -262,6 +262,7 @@ void leave(uint8_t button_idx) {
     case 1:
       break;
     case 2:
+      current_state.hid = 0;
       break;
     case 3:
       current_state.hid = 0;
