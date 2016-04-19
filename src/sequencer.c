@@ -1,9 +1,11 @@
+#include <avr/pgmspace.h>
+
 #include "sequencer.h"
 #include "input.h"
 #include "timer.h"
 #include "euclid.h"
 #include "pattern.h"
-#include <avr/pgmspace.h>
+#include "scale.h"
 
 volatile unsigned char active_seq[16] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 volatile uint8_t current_step = 0;
@@ -127,40 +129,21 @@ void randomize_seq() {
   }
 }
 
-//CDEFF#GAB = 0 2 4 5 6 7 9 11 
-static const uint8_t pattern_idx_to_pitch_idx[8] = {0, 2, 4, 5, 6, 7, 9, 11};
-
 uint8_t prev_pitch = 255;
 void update_pitch() {
   prev_pitch = current_pitch;
-  long pattern_value = (pgm_read_byte(&(scale_patterns[current_values.v.scale_pattern][current_step])) - 8) * current_values.v.scale_range;
-  long rand_value = (uint8_t)(((int)current_values.v.scale_pattern_random * (int)((rand() >> 8) - 127))/16);
-  long tmp_value_long = (pattern_value + rand_value);
-  if (tmp_value_long < 0) {
-    tmp_value_long = 0;
-  }
-  int tmp_value = ((uint16_t)tmp_value_long) / 128 + current_values.v.scale_shift;
+  int pattern_value = ((pgm_read_byte(&(scale_patterns[current_values.v.scale_pattern][current_step])) - 8) * current_values.v.scale_range);
+  int rand_value = (((int)current_values.v.scale_pattern_random * ((int)((rand() & 0xF000) >> 12) - 8)));
+  int tmp_value = ((pattern_value + rand_value) / 5) + current_values.v.scale_shift;
   if (tmp_value < 0) {
     tmp_value = 0;
   }
 
   // quantize
-  uint16_t base_value = tmp_value / 8 * 8;
+  int base_value = tmp_value / 12 * 12;
   int upper_value = tmp_value - base_value;
-  for (int i = 0; i < 8; ++i) {
-    if (current_values.v.scale_select & (1<<((upper_value+i)%8))) {
-      tmp_value += i;
-      break;
-    }
-    if (current_values.v.scale_select & (1<<((upper_value-i)%8))) {
-      tmp_value -= i;
-      break;
-    }
-  }
-  base_value = tmp_value / 8 * 8;
-  upper_value = tmp_value - base_value;
-
-  int current_pitch_tmp = (base_value/8*12) + pattern_idx_to_pitch_idx[upper_value] + (current_values.v.scale_transpose - 36);
+  upper_value = pgm_read_byte(&(scale_table[current_values.v.scale_select][upper_value]));
+  int current_pitch_tmp = base_value + upper_value + (current_values.v.scale_transpose - 36);
   if (current_pitch_tmp > 119) {
     current_pitch = 119;
   } else if (current_pitch_tmp < 0) {

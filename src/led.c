@@ -53,19 +53,6 @@ void output_led_on_value() {
   }
 }
 
-void output_led_on_scale() {
-  if (g_led_i < 8) {
-    // scale keys
-    uint8_t v = current_values.v.scale_select;
-    if (v & (1<<g_led_i)) {
-      PORTD |= pgm_read_byte(&(led_idx_to_port_and_ddr[g_led_i][0]));
-      DDRD   = pgm_read_byte(&(led_idx_to_port_and_ddr[g_led_i][1]));
-    }
-  } else {
-    output_led_on_transpose_key();
-  }
-}
-
 void output_led_on_transpose_key() {
   uint8_t v = current_values.v.scale_transpose % 12;
   if (v % 2 == 0) {
@@ -122,22 +109,13 @@ void output_led() {
         output_led_on_value();
       }
       break;
-    case SCALE:
-      duration = ticks() - last_led_disp_tick;
-      if (duration > MAX_DISPLAY_TICK_FOR_VALUE || duration < 0 /* count wrap? */) {
-        display_mode = SEQ;
-        output_led_on_seq();
-      } else {
-        output_led_on_value();
-      }
-      break;
     case TRANSPOSE:
       duration = ticks() - last_led_disp_tick;
       if (duration > MAX_DISPLAY_TICK_FOR_VALUE || duration < 0 /* count wrap? */) {
         display_mode = SEQ;
         output_led_on_seq();
       } else {
-        output_led_on_value();
+        output_led_on_transpose();
       }
       break;
     default:

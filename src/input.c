@@ -88,9 +88,9 @@ void set_current_value(uint8_t value, uint8_t knob_idx) {
     case 2: // scale select / transpose / scale pattern random
       switch (func_mode) {
         case NONE:
-          operate_values.v.scale_select = value;
+          operate_values.v.scale_select = (value & 0xF0) >> 4;
           changed_value_flags.v.scale_select = 1;
-          set_display_mode(SCALE);
+          set_led_count(((value & 0xF0) >> 4) + 1);
           break;
         case FUNC:
           operate_values.v.scale_transpose = (uint16_t)value * 76 / 256;
@@ -112,12 +112,12 @@ void set_current_value(uint8_t value, uint8_t knob_idx) {
           set_led_count(((value & 0xF0) >> 4) + 1);
           break;
         case FUNC:
-          operate_values.v.scale_range = value;
+          operate_values.v.scale_range = ((value & 0xF0) >> 4) + 1;
           changed_value_flags.v.scale_range = 1;
           set_led_count(((value & 0xF0) >> 4) + 1);
           break;
         case HID:
-          operate_values.v.scale_pattern_random = value;
+          operate_values.v.scale_pattern_random = (value & 0xF0) >> 4;
           changed_value_flags.v.scale_pattern_random = 1;
           set_led_count(((value & 0xF0) >> 4) + 1);
           break;
@@ -374,11 +374,11 @@ void reset_all_input() {
   current_values.v.step_length = 16;
   current_values.v.step_rot = 0;
   current_values.v.step_rand = 0;
-  current_values.v.scale_select = 127;
-  current_values.v.scale_shift = 32;
+  current_values.v.scale_select = 0;
+  current_values.v.scale_shift = 64;
   current_values.v.scale_pattern = 0;
-  current_values.v.scale_transpose = 38;
-  current_values.v.scale_range = 128;
+  current_values.v.scale_transpose = 36;
+  current_values.v.scale_range = 8;
   current_values.v.scale_pattern_random = 0;
   current_values.v.slide = 0;
   current_values.v.swing = 0;

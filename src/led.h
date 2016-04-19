@@ -9,13 +9,11 @@
 enum DisplayMode {
   SEQ,
   COUNT,
-  SCALE,
   TRANSPOSE
 };
 
 void output_led_on_seq();
 void output_led_on_value();
-void output_led_on_scale();
 void output_led_on_transpose_key();
 void output_led_on_transpose();
 void output_led();
