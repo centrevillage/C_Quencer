@@ -40,7 +40,7 @@ void setup() {
   read_knob_values();
 }
 
-static uint16_t prev_timer_count = 65535;
+static uint16_t prev_timer_count = 0xFFFF;
 void loop() {
   cli();
   uint16_t current_timer_count = TCNT1;

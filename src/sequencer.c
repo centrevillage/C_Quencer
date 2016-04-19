@@ -6,6 +6,7 @@
 #include "euclid.h"
 #include "pattern.h"
 #include "scale.h"
+#include "dac.h"
 
 volatile unsigned char active_seq[16] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 volatile uint8_t current_step = 0;
@@ -23,6 +24,7 @@ void step_seq() {
   }
   cli();
   divide_idx = 1;
+
   if (current_step < (current_values.v.step_length-1)) {
     ++current_step;
   } else {
@@ -37,6 +39,7 @@ void step_seq() {
     }
   }
   if (active_seq[current_step]) {
+    reset_phase_shift();
     update_pitch();
   }
   start_gate_timer();

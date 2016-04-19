@@ -131,6 +131,8 @@ static const float pitch_to_table_index[120] PROGMEM = {
   32.36713603112134
 };
 
+volatile static uint8_t phase_shift = 0;
+
 void spi_init() {
   //Enable SPI, Master, set clock rate fck/64 = 250kHz
   SPCR = (1<<SPE)|(1<<MSTR)|(1<<SPR1);
@@ -165,7 +167,7 @@ void output_dac_b(uint16_t data) {
 // ss_pin = PB0
 void output_osc(uint16_t timer_count) {
   float current_idx = pgm_read_float(&(pitch_to_table_index[current_pitch]));
-  if (current_values.v.slide > 0 && prev_pitch < 120) {
+  if (current_values.v.slide > 0 && prev_pitch < 120 && active_seq[current_step]) {
     float prev_idx = pgm_read_float(&(pitch_to_table_index[prev_pitch]));
     if (prev_idx != current_idx) {
       uint16_t slide_count = (prev_idx < current_idx) ? ((uint16_t)current_values.v.slide * 32) : ((uint16_t)current_values.v.slide * 48);
@@ -176,7 +178,7 @@ void output_osc(uint16_t timer_count) {
       }
     }
   }
-  uint8_t current_table_index = (uint8_t)((uint16_t)(current_idx*timer_count)%256);
+  uint8_t current_table_index = (uint8_t)((uint16_t)(current_idx*timer_count+phase_shift)%256);
   uint16_t current_value = pgm_read_byte(&(wavetables[selected_wavetable_type][current_table_index]));
   output_dac_a(current_value*16);
 }
@@ -187,4 +189,13 @@ void output_cv(uint16_t timer_count) {
   // 120 pitch unit = 5 * 120 / 128  = 4.68 V pin out
   // 4.68 V pin out -> analog gain x 2.17 -> 10V cv out
   output_dac_b(((uint16_t)current_pitch)*32);
+}
+
+void reset_phase_shift() {
+  phase_shift = 0;
+}
+
+void update_phase_shift(uint16_t timer_count) {
+  float current_idx = pgm_read_float(&(pitch_to_table_index[current_pitch]));
+  phase_shift = (uint8_t)((uint16_t)(current_idx*timer_count+phase_shift)%256);
 }

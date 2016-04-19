@@ -1,6 +1,7 @@
 #include "timer.h"
 #include "input.h"
 #include "sequencer.h"
+#include "dac.h"
 
 // Timer setting
 // timer0: gate length timer
@@ -34,6 +35,7 @@ ISR (TIMER0_OVF_vect) {
 
 // step timer interrupt
 ISR (TIMER1_COMPA_vect) {
+  update_phase_shift(TCNT1);
   if (current_state.start) {
     step_seq();
     update_step_time();
