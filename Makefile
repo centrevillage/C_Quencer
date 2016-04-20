@@ -70,7 +70,7 @@ FORMAT = ihex
 # List Assembler source files here.
 ASRC = 
 
-CFLAGS = -mmcu=$(MCU) $(C_STD) -MD -MP $(DEFINES) $(INCLUDES) -O$(AVR_OPTIMIZE) $(patsubst %,-I%,$(EXTRAINCDIRS))
+CFLAGS = -Wall -Wextra -mmcu=$(MCU) $(C_STD) -MD -MP $(DEFINES) $(INCLUDES) -O$(AVR_OPTIMIZE) $(patsubst %,-I%,$(EXTRAINCDIRS))
 LDFLAGS = -Wl,-Map=$(MAP) -Wl,--start-group -Wl,-lm  -Wl,--end-group -Wl,-gc-sections -mmcu=$(MCU)
 
 # Optional assembler flags.
