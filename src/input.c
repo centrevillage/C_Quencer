@@ -42,7 +42,15 @@ void read_knob_values() {
   }
 }
 
+uint8_t is_multi_tap(uint8_t button_idx, uint8_t count) {
+  return button_history.button_idx == button_idx && button_history.count >= count;
+}
+
 void set_current_value(uint8_t value, uint8_t knob_idx) {
+  // reset tap button history
+  if (is_multi_tap(2, 1)) {
+    button_history.count = 0;
+  }
   uint8_t is_change_seq = 0;
   switch (knob_idx) {
     case 0: // fill / len / slide
@@ -175,10 +183,6 @@ void update_button_history_on_leave(uint8_t button_idx) {
   }
 };
 
-uint8_t is_multi_tap(uint8_t button_idx, uint8_t count) {
-  return button_history.button_idx == button_idx && button_history.count >= count;
-}
-
 void press(uint8_t button_idx) {
   ButtonHistory prev_button_history = button_history;
 
@@ -222,7 +226,7 @@ void press(uint8_t button_idx) {
         }
       } else {
         current_state.hid = 1;
-        if (is_multi_tap(button_idx, 2) && ((button_history.last_leave > button_history.last_tick) && (button_history.last_leave - button_history.last_tick) > 16384)) {
+        if (is_multi_tap(button_idx, 2) && ((button_history.last_leave < button_history.last_tick) || (button_history.last_leave - button_history.last_tick) > 4096)) {
           set_step_interval(button_history.interval_tick/8);
         }
       }
