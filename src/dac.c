@@ -179,7 +179,7 @@ void output_osc(uint16_t timer_count) {
     }
   }
   uint16_t current_table_index = ((uint16_t)(current_idx*timer_count+phase_shift)%WAVETABLE_SIZE);
-  uint16_t current_value = pgm_read_byte(&(wavetables[selected_wavetable_type][current_table_index]));
+  uint16_t current_value = pgm_read_word(&(wavetables[selected_wavetable_type][current_table_index]));
   output_dac_a(current_value);
 }
 
