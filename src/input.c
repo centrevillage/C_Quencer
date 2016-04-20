@@ -165,6 +165,16 @@ void update_button_history(uint8_t button_idx) {
   }
 };
 
+void update_button_history_on_leave(uint8_t button_idx) {
+  enum FuncMode mode = get_func_mode();
+  if (button_history.mode == mode && button_history.button_idx == button_idx) {
+    unsigned long t = ticks();
+    button_history.last_leave = t;
+  } else {
+    button_history.last_leave = 0;
+  }
+};
+
 uint8_t is_multi_tap(uint8_t button_idx, uint8_t count) {
   return button_history.button_idx == button_idx && button_history.count >= count;
 }
@@ -211,43 +221,39 @@ void press(uint8_t button_idx) {
           reset_button_history(button_idx);
         }
       } else {
-        if (is_multi_tap(button_idx, 2)) {
+        current_state.hid = 1;
+        if (is_multi_tap(button_idx, 2) && ((button_history.last_leave > button_history.last_tick) && (button_history.last_leave - button_history.last_tick) > 16384)) {
           set_step_interval(button_history.interval_tick/8);
         }
       }
       break;
     case 3:
-      if (button_state[2]) {
-        // TAP+REC = hidden mode
-        current_state.hid = 1;
-      } else {
-        if (func_mode == FUNC) {
-          switch (rec_mode) {
-            case STOP:
-              rec_mode = PLAY;
-              break;
-            case PLAY:
-              rec_mode = STOP;
-              break;
-            case REC:
-              clear_recording();
-              break;
-            default:
-              break;
-          }
-        } else if (func_mode == NONE) {
-          if (!current_state.rec) {
-            if (rec_mode == STOP) {
-              clear_recording();
-            }
-            rec_mode = REC;
-            start_recording();
-          } else {
+      if (func_mode == FUNC) {
+        switch (rec_mode) {
+          case STOP:
             rec_mode = PLAY;
-            end_recording();
-          }
-          current_state.rec = !current_state.rec;
+            break;
+          case PLAY:
+            rec_mode = STOP;
+            break;
+          case REC:
+            clear_recording();
+            break;
+          default:
+            break;
         }
+      } else if (func_mode == NONE) {
+        if (!current_state.rec) {
+          if (rec_mode == STOP) {
+            clear_recording();
+          }
+          rec_mode = REC;
+          start_recording();
+        } else {
+          rec_mode = PLAY;
+          end_recording();
+        }
+        current_state.rec = !current_state.rec;
       }
       break;
     default:
@@ -257,6 +263,7 @@ void press(uint8_t button_idx) {
 }
 
 void leave(uint8_t button_idx) {
+  update_button_history_on_leave(button_idx);
   switch(button_idx) {
     case 0:
       current_state.func = 0;
@@ -267,7 +274,6 @@ void leave(uint8_t button_idx) {
       current_state.hid = 0;
       break;
     case 3:
-      current_state.hid = 0;
       break;
     default:
       break;
