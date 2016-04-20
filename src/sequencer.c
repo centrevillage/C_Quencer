@@ -36,8 +36,10 @@ void step_seq() {
     play_recorded_knob_values();
     if (rec_mode == REC) {
       record_current_knob_values();
+      next_record_pos();
+    } else {
+      next_play_pos();
     }
-    next_record_pos();
   }
   if (active_seq[current_step]) {
     reset_phase_shift();

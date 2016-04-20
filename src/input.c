@@ -336,12 +336,21 @@ static volatile uint8_t record_start = 0;
 static volatile uint8_t record_end = 0;
 static volatile uint8_t record_length = 0;
 static volatile uint8_t record_pos = 0;
+static volatile uint8_t play_pos = 0;
 
 void next_record_pos() {
   ++record_pos;
   if (record_pos >= 64) {
     record_pos = 0;
   }
+}
+
+void next_play_pos() {
+  ++play_pos;
+  if (play_pos >= record_length) {
+    play_pos = 0;
+  }
+  record_pos = (play_pos + record_start) % 64;
 }
 
 void record_current_knob_values() {
@@ -366,6 +375,7 @@ void end_recording() {
   record_end = record_pos;
   int record_start_tmp = record_end - record_length;
   record_start = (uint8_t)(record_start_tmp < 0 ? (record_start_tmp + 64) : record_start_tmp);
+  play_pos = 0;
 }
 
 void play_recorded_knob_values() {
