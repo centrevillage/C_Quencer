@@ -75,6 +75,7 @@ void end_recording();
 void clear_recording();
 void play_recorded_knob_values();
 void reset_all_input();
+void next_record_pos();
 
 
 #endif /* CQ_INPUT_H_ */

@@ -332,17 +332,20 @@ static volatile uint8_t record_start = 0;
 static volatile uint8_t record_end = 0;
 static volatile uint8_t record_length = 0;
 static volatile uint8_t record_pos = 0;
+
+void next_record_pos() {
+  ++record_pos;
+  if (record_pos >= 64) {
+    record_pos = 0;
+  }
+}
+
 void record_current_knob_values() {
   for (int i = 0; i < sizeof(ControllerValue); ++i) {
     if (changed_value_flags.values[i]) {
       recorded_values[record_pos].values[i] = operate_values.values[i];
       recorded_value_flags[record_pos].values[i] = 1;
     }
-  }
-
-  record_pos++;
-  if (record_pos >= 64) {
-    record_pos = 0;
   }
 
   if (record_length < 64) {
