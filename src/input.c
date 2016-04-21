@@ -103,7 +103,7 @@ void set_current_value(uint8_t value, uint8_t knob_idx) {
         case FUNC:
           operate_values.v.scale_transpose = (uint16_t)value * 76 / 256;
           changed_value_flags.v.scale_transpose = 1;
-          set_led_count(((value & 0xF0) >> 4) + 1);
+          set_display_mode(TRANSPOSE);
           break;
         case HID:
           operate_values.v.scale_shift = value / 4;
@@ -236,12 +236,15 @@ void press(uint8_t button_idx) {
         switch (rec_mode) {
           case STOP:
             rec_mode = PLAY;
+            set_display_mode(REC_REDO);
             break;
           case PLAY:
             rec_mode = STOP;
+            set_display_mode(REC_CLEAR);
             break;
           case REC:
             clear_recording();
+            set_display_mode(REC_CLEAR);
             break;
           default:
             break;

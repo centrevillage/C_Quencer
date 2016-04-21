@@ -7,6 +7,8 @@
 static volatile enum DisplayMode display_mode = SEQ;
 static volatile uint8_t led_count = 0;
 static volatile unsigned long last_led_disp_tick = 0;
+static uint8_t rec_led_count = 0;
+
 
 static int g_led_i = 0;
 
@@ -80,6 +82,13 @@ void output_led_on_transpose() {
   }
 }
 
+void output_led_on_rec_clear() {
+  if (g_led_i == rec_led_count) {
+    PORTD |= pgm_read_byte(&(led_idx_to_port_and_ddr[g_led_i][0]));
+    DDRD   = pgm_read_byte(&(led_idx_to_port_and_ddr[g_led_i][1]));
+  }
+}
+
 static uint8_t led_blink_count = 0;
 
 // led_task
@@ -116,6 +125,26 @@ void output_led() {
         output_led_on_seq();
       } else {
         output_led_on_transpose();
+      }
+      break;
+    case REC_CLEAR:
+      duration = ticks() - last_led_disp_tick;
+      if (duration > MAX_DISPLAY_TICK_FOR_REC_CLEAR || duration < 0 /* count wrap? */) {
+        display_mode = SEQ;
+        output_led_on_seq();
+      } else {
+        rec_led_count = 15 - (duration/4096);
+        output_led_on_rec_clear();
+      }
+      break;
+    case REC_REDO:
+      duration = ticks() - last_led_disp_tick;
+      if (duration > MAX_DISPLAY_TICK_FOR_REC_CLEAR || duration < 0 /* count wrap? */) {
+        display_mode = SEQ;
+        output_led_on_seq();
+      } else {
+        rec_led_count = (duration/4096);
+        output_led_on_rec_clear();
       }
       break;
     default:
