@@ -135,8 +135,8 @@ volatile static uint8_t phase_shift = 0;
 
 void spi_init() {
   //Enable SPI, Master, set clock rate fck/32 = 500kHz
-  SPCR = (1<<SPE)|(1<<MSTR)|(1<<SPR1);
-  SPSR = (1<<SPI2X);
+  SPCR = (1<<SPE)|(1<<MSTR);
+  SPSR = 0;
 }
 
 static inline uint8_t trans_spi(uint8_t data) {
