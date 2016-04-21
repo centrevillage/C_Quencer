@@ -160,12 +160,19 @@ void output_dac_b(uint16_t data) {
   PORTB = (PORTB & ~LDAC_SS_MASK) | SS_MASK;
 }
 
+static uint16_t prev_current_table_idx = 0;
+volatile uint8_t is_request_update_phase_shift = 0;
+
 //C0- B9 = 0 - 119
 //A5(69) = 440
 //1 timer count = 62.5kHz = 1/ 62500 s = 16 us / 1 cycle
 // ldac_pin = PB1
 // ss_pin = PB0
 void output_osc(uint16_t timer_count) {
+  if (is_request_update_phase_shift) {
+    phase_shift = prev_current_table_idx;
+    is_request_update_phase_shift = 0;
+  }
   float current_idx = pgm_read_float(&(pitch_to_table_index[current_pitch]));
   if (current_values.v.slide > 0 && prev_pitch < 120 && active_seq[current_step]) {
     float prev_idx = pgm_read_float(&(pitch_to_table_index[prev_pitch]));
@@ -181,6 +188,7 @@ void output_osc(uint16_t timer_count) {
   uint16_t current_table_index = ((uint16_t)(current_idx*timer_count+phase_shift)%WAVETABLE_SIZE);
   uint16_t current_value = pgm_read_word(&(wavetables[selected_wavetable_type][current_table_index]));
   output_dac_a(current_value);
+  prev_current_table_idx = current_table_index;
 }
 
 void output_cv(uint16_t timer_count) {
@@ -195,7 +203,6 @@ void reset_phase_shift() {
   phase_shift = 0;
 }
 
-void update_phase_shift(uint16_t timer_count) {
-  float current_idx = pgm_read_float(&(pitch_to_table_index[current_pitch]));
-  phase_shift = (uint8_t)((uint16_t)(current_idx*timer_count+phase_shift)%WAVETABLE_SIZE);
+void update_phase_shift() {
+  is_request_update_phase_shift = 1;
 }

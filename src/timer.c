@@ -35,7 +35,7 @@ ISR (TIMER0_OVF_vect) {
 
 // step timer interrupt
 ISR (TIMER1_COMPA_vect) {
-  update_phase_shift(TCNT1);
+  update_phase_shift();
   if (current_state.start) {
     step_seq();
     update_step_time();
