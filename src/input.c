@@ -373,7 +373,7 @@ void start_recording() {
 
 void end_recording() {
   record_end = record_pos;
-  int record_start_tmp = record_end - record_length;
+  int record_start_tmp = ((int)record_end) - ((int)record_length);
   record_start = (uint8_t)(record_start_tmp < 0 ? (record_start_tmp + 64) : record_start_tmp);
   play_pos = 0;
 }

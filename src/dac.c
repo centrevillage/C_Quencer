@@ -134,9 +134,9 @@ static const float pitch_to_table_index[120] PROGMEM = {
 volatile static uint8_t phase_shift = 0;
 
 void spi_init() {
-  //Enable SPI, Master, set clock rate fck/32 = 500kHz
+  //Enable SPI, Master, set clock rate fck/2 = 8MHz
   SPCR = (1<<SPE)|(1<<MSTR);
-  SPSR = 0;
+  SPSR = (1<<SPI2X);
 }
 
 static inline uint8_t trans_spi(uint8_t data) {

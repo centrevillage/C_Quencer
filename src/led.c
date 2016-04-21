@@ -87,7 +87,7 @@ static uint8_t led_blink_count = 0;
 // use PD0 - PD5
 void output_led() {
   if (rec_mode == REC) {
-    if (led_blink_count++ < 16) {
+    if (led_blink_count++ < 64) {
       return;
     }
     led_blink_count = 0;
