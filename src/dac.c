@@ -168,35 +168,39 @@ volatile uint8_t is_request_update_phase_shift = 0;
 //1 timer count = 62.5kHz = 1/ 62500 s = 16 us / 1 cycle
 // ldac_pin = PB1
 // ss_pin = PB0
-void output_osc(uint16_t timer_count) {
+void output_osc_and_cv(uint16_t timer_count) {
   if (is_request_update_phase_shift) {
     phase_shift = prev_current_table_idx;
     is_request_update_phase_shift = 0;
   }
   float current_idx = pgm_read_float(&(pitch_to_table_index[current_pitch]));
+  float cv_pitch = current_pitch;
+
+  // calculate slide rate
   if (current_values.v.slide > 0 && prev_pitch < 120 && active_seq[current_step]) {
     float prev_idx = pgm_read_float(&(pitch_to_table_index[prev_pitch]));
     if (prev_idx != current_idx) {
       uint16_t slide_count = (prev_idx < current_idx) ? ((uint16_t)current_values.v.slide * 32) : ((uint16_t)current_values.v.slide * 48);
       if (slide_count > timer_count) {
-        float rate = ((float)timer_count/(float)slide_count);
-        rate = pgm_read_float(&(slide_table[(uint8_t)(rate * 256)]));
-        current_idx = (current_idx - prev_idx) * rate + prev_idx;
+        float slide_rate = ((float)timer_count/(float)slide_count);
+        slide_rate = pgm_read_float(&(slide_table[(uint8_t)(slide_rate * 256)]));
+        current_idx = (current_idx - prev_idx) * slide_rate + prev_idx;
+        cv_pitch = (current_pitch - prev_pitch) * slide_rate + prev_pitch;
       }
     }
   }
+
   uint16_t current_table_index = ((uint16_t)(current_idx*timer_count+phase_shift)%WAVETABLE_SIZE);
   uint16_t current_value = pgm_read_word(&(wavetables[selected_wavetable_type][current_table_index]));
   output_dac_a(current_value);
-  prev_current_table_idx = current_table_index;
-}
 
-void output_cv(uint16_t timer_count) {
-  // current_pitch = N pitch unit; 1 octave = 12 pitch unit
+  // current_pitch(cv_pitch) = N pitch unit; 1 octave = 12 pitch unit
   // 128 pitch unit = 4096 dac value = 5 V pin out
   // 120 pitch unit = 5 * 120 / 128  = 4.68 V pin out
   // 4.68 V pin out -> analog gain x 2.17 -> 10V cv out
-  output_dac_b(((uint16_t)current_pitch)*32);
+  output_dac_b(((uint16_t)cv_pitch)*32);
+
+  prev_current_table_idx = current_table_index;
 }
 
 void reset_phase_shift() {

@@ -8,8 +8,7 @@
 #define LDAC_SS_MASK 0b00000011
 #define BASE_HZ 440
 
-void output_osc(uint16_t timer_count);
-void output_cv(uint16_t timer_count);
+void output_osc_and_cv(uint16_t timer_count);
 void spi_init();
 void reset_phase_shift();
 void update_phase_shift();
