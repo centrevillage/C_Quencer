@@ -180,10 +180,10 @@ void output_osc_and_cv(uint16_t timer_count) {
   if (current_values.v.slide > 0 && prev_pitch < 120 && active_seq[current_step]) {
     float prev_idx = pgm_read_float(&(pitch_to_table_index[prev_pitch]));
     if (prev_idx != current_idx) {
-      uint16_t slide_count = (prev_idx < current_idx) ? ((uint16_t)current_values.v.slide * 32) : ((uint16_t)current_values.v.slide * 48);
+      uint16_t slide_count = (prev_idx < current_idx) ? (((uint16_t)current_values.v.slide) * 32) : (((uint16_t)current_values.v.slide) * 48);
       if (slide_count > timer_count) {
         float slide_rate = ((float)timer_count/(float)slide_count);
-        slide_rate = pgm_read_float(&(slide_table[(uint8_t)(slide_rate * 256)]));
+        slide_rate = pgm_read_float(&(slide_table[(uint16_t)(slide_rate * SLIDE_TABLE_SIZE)]));
         current_idx = (current_idx - prev_idx) * slide_rate + prev_idx;
         cv_pitch = (current_pitch - prev_pitch) * slide_rate + prev_pitch;
       }
@@ -198,7 +198,7 @@ void output_osc_and_cv(uint16_t timer_count) {
   // 128 pitch unit = 4096 dac value = 5 V pin out
   // 120 pitch unit = 5 * 120 / 128  = 4.68 V pin out
   // 4.68 V pin out -> analog gain x 2.17 -> 10V cv out
-  output_dac_b(((uint16_t)cv_pitch)*32);
+  output_dac_b(cv_pitch*32);
 
   prev_current_table_idx = current_table_index;
 }
