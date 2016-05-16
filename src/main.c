@@ -38,6 +38,7 @@ void setup() {
   spi_init();
 
   read_knob_values();
+  update_knob_values();
 }
 
 static uint16_t prev_timer_count = 0xFFFF;

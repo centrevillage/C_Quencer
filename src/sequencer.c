@@ -31,7 +31,7 @@ void step_seq() {
     current_step = 0;
     update_seq_pattern();
   }
-  read_knob_values();
+  update_knob_values();
   if (rec_mode == PLAY || rec_mode == REC) {
     play_recorded_knob_values();
     if (rec_mode == REC) {

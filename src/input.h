@@ -67,6 +67,7 @@ volatile static uint8_t knob_values[4][8];
 volatile static uint8_t button_state[4];
 
 void read_knob_values();
+void update_knob_values();
 void set_current_value(uint8_t value, uint8_t knob_idx);
 void press(uint8_t button_idx);
 void record_current_knob_values();

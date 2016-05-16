@@ -13,21 +13,29 @@ volatile enum FuncMode func_mode = NONE;
 volatile ControllerState current_state;
 volatile ButtonHistory button_history;
 
+volatile static uint8_t current_knob_idx = 0;
 volatile static uint8_t current_knob_value_idx = 0;
 
 // input task
 void read_knob_values() {
+  knob_values[current_knob_idx][current_knob_value_idx] = 255 - adc_read(current_knob_idx);
+  ++current_knob_idx;
+  if (current_knob_idx > 3) {
+    current_knob_idx = 0;
+    ++current_knob_value_idx;
+    if (current_knob_value_idx >= 8) {
+      current_knob_value_idx = 0;
+    }
+  }
+}
+
+static volatile uint16_t prev_values[] = {0, 0, 0, 0};
+void update_knob_values() {
   uint16_t prev_value;
   uint16_t new_value;
-
   for (uint8_t i = 0; i < 4; ++i) {
-    prev_value = 0;
-    for (uint8_t j = 0; j < 8; ++j) {
-      prev_value += knob_values[i][j];
-    }
-    prev_value = prev_value / 8;
+    prev_value = prev_values[i];
     new_value = 0;
-    knob_values[i][current_knob_value_idx] = 255 - adc_read(i);
     for (uint8_t j = 0; j < 8; ++j) {
       new_value += knob_values[i][j];
     }
@@ -35,11 +43,8 @@ void read_knob_values() {
     if (new_value != prev_value) {
       set_current_value((uint8_t)new_value, i); 
     }
+    prev_values[i] = new_value;
   } 
-  ++current_knob_value_idx;
-  if (current_knob_value_idx >= 8) {
-    current_knob_value_idx = 0;
-  }
 }
 
 uint8_t is_multi_tap(uint8_t button_idx, uint8_t count) {
