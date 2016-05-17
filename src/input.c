@@ -387,10 +387,17 @@ void end_recording() {
 }
 
 void play_recorded_knob_values() {
+  uint8_t is_change_seq = 0;
   for (int i = 0; i < sizeof(ControllerValue); ++i) {
     if (!changed_value_flags.values[i] && recorded_value_flags[record_pos].values[i]) {
       current_values.values[i] = recorded_values[record_pos].values[i];
+      if (i < 3) { // step_fill, step_length, step_rot
+        is_change_seq = 1;
+      }
     }
+  }
+  if (is_change_seq) {
+    update_seq_pattern();
   }
 }
 
