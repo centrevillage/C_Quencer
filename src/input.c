@@ -320,10 +320,12 @@ ISR(PCINT2_vect) {
 // REC BUTTON = PC5, PCINT13
 ISR(PCINT1_vect) {
   if(bit_is_clear(PINC,4)) {
-    if (!current_state.start) {
-      start_trigger();
+    if (TCNT1 == 0 || TCNT1 > 50) {
+      if (!current_state.start) {
+        start_trigger();
+      }
+      step_seq();
     }
-    step_seq();
   }	
   if (bit_is_clear(PINC, 5)) {
     if (!button_state[3]) {
