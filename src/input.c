@@ -111,7 +111,7 @@ void set_current_value(uint8_t value, uint8_t knob_idx) {
           set_display_mode(TRANSPOSE);
           break;
         case HID:
-          operate_values.v.scale_shift = value / 4;
+          operate_values.v.scale_shift = value / 4 + 16;
           changed_value_flags.v.scale_shift = 1;
           set_led_count(((value & 0xF0) >> 4) + 1);
           break;
