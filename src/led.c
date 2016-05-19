@@ -8,7 +8,7 @@ static volatile enum DisplayMode display_mode = SEQ;
 static volatile uint8_t led_count = 0;
 static volatile unsigned long last_led_disp_tick = 0;
 static uint8_t rec_led_count = 0;
-
+static uint8_t led_blink_count = 0;
 
 static int g_led_i = 0;
 
@@ -89,7 +89,68 @@ void output_led_on_rec_clear() {
   }
 }
 
-static uint8_t led_blink_count = 0;
+void output_led_on_edit_select(){
+  if (g_led_i == 5 || g_led_i == 11) {
+    PORTD |= pgm_read_byte(&(led_idx_to_port_and_ddr[g_led_i][0]));
+    DDRD   = pgm_read_byte(&(led_idx_to_port_and_ddr[g_led_i][1]));
+  }
+}
+
+void output_led_on_edit_scale(){
+  if (g_led_i == edit_pos) {
+    ++led_blink_count;
+    if (led_blink_count >= 128) {
+      PORTD |= pgm_read_byte(&(led_idx_to_port_and_ddr[g_led_i][0]));
+      DDRD   = pgm_read_byte(&(led_idx_to_port_and_ddr[g_led_i][1]));
+    }
+  } else if (edit_scale & (1<<g_led_i)) {
+    PORTD |= pgm_read_byte(&(led_idx_to_port_and_ddr[g_led_i][0]));
+    DDRD   = pgm_read_byte(&(led_idx_to_port_and_ddr[g_led_i][1]));
+  }
+}
+
+void output_led_on_edit_pattern(){
+  if (g_led_i == edit_pos) {
+    ++led_blink_count;
+    if (led_blink_count >= 64) {
+      led_blink_count = 0;
+    }
+    if (led_blink_count >= 32) {
+      PORTD |= pgm_read_byte(&(led_idx_to_port_and_ddr[g_led_i][0]));
+      DDRD   = pgm_read_byte(&(led_idx_to_port_and_ddr[g_led_i][1]));
+    }
+  }
+}
+
+void output_led_on_edit_scale_select(){
+  if (led_blink_count++ < 64) {
+    return;
+  }
+  led_blink_count = 0;
+
+  if (g_led_i == 11) {
+    PORTD |= pgm_read_byte(&(led_idx_to_port_and_ddr[g_led_i][0]));
+    DDRD   = pgm_read_byte(&(led_idx_to_port_and_ddr[g_led_i][1]));
+  }
+}
+void output_led_on_edit_pattern_select(){
+  if (led_blink_count++ < 64) {
+    return;
+  }
+  led_blink_count = 0;
+
+  if (g_led_i == 5) {
+    PORTD |= pgm_read_byte(&(led_idx_to_port_and_ddr[g_led_i][0]));
+    DDRD   = pgm_read_byte(&(led_idx_to_port_and_ddr[g_led_i][1]));
+  }
+}
+
+void output_led_on_select_preset() {
+  if (g_led_i == edit_preset_num) {
+    PORTD |= pgm_read_byte(&(led_idx_to_port_and_ddr[g_led_i][0]));
+    DDRD   = pgm_read_byte(&(led_idx_to_port_and_ddr[g_led_i][1]));
+  }
+}
 
 // led_task
 // charlieplexing
@@ -101,7 +162,7 @@ void output_led() {
     }
     led_blink_count = 0;
   }
-  unsigned long duration;
+  long duration;
 
   DDRD = 0;
   PORTD &= (uint8_t)~LED_MASK;
@@ -112,8 +173,16 @@ void output_led() {
     case COUNT:
       duration = ticks() - last_led_disp_tick;
       if (duration > MAX_DISPLAY_TICK_FOR_VALUE || duration < 0 /* count wrap? */) {
-        display_mode = SEQ;
-        output_led_on_seq();
+        if (edit_mode == SCALE) {
+          display_mode = EDIT_SCALE;
+          output_led_on_edit_scale();
+        } else if (edit_mode == PATTERN) {
+          display_mode = EDIT_PATTERN;
+          output_led_on_edit_pattern();
+        } else {
+          display_mode = SEQ;
+          output_led_on_seq();
+        }
       } else {
         output_led_on_value();
       }
@@ -145,6 +214,47 @@ void output_led() {
       } else {
         rec_led_count = (duration/4096);
         output_led_on_rec_clear();
+      }
+      break;
+    case EDIT_SELECT:
+      output_led_on_edit_select();
+      break;
+    case EDIT_SCALE:
+      output_led_on_edit_scale();
+      break;
+    case EDIT_PATTERN:
+      output_led_on_edit_pattern();
+      break;
+    case EDIT_PATTERN_SELECT:
+      duration = ticks() - last_led_disp_tick;
+      if (duration > MAX_DISPLAY_TICK_FOR_VALUE || duration < 0 /* count wrap? */) {
+        display_mode = EDIT_PATTERN;
+        output_led_on_edit_pattern();
+      } else {
+        output_led_on_edit_pattern_select();
+      }
+      break;
+    case EDIT_SCALE_SELECT:
+      duration = ticks() - last_led_disp_tick;
+      if (duration > MAX_DISPLAY_TICK_FOR_VALUE || duration < 0 /* count wrap? */) {
+        display_mode = EDIT_SCALE;
+        output_led_on_edit_scale();
+      } else {
+        output_led_on_edit_scale_select();
+      }
+      break;
+    case SELECT_PRESET:
+      duration = ticks() - last_led_disp_tick;
+      if (duration > MAX_DISPLAY_TICK_FOR_VALUE || duration < 0 /* count wrap? */) {
+        if (edit_mode == SCALE) {
+          display_mode = EDIT_SCALE;
+          output_led_on_edit_scale();
+        } else if (edit_mode == PATTERN) {
+          display_mode = EDIT_PATTERN;
+          output_led_on_edit_pattern();
+        }
+      } else {
+        output_led_on_select_preset();
       }
       break;
     default:

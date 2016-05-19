@@ -7,6 +7,7 @@
 #include "pattern.h"
 #include "scale.h"
 #include "dac.h"
+#include "eeprom.h"
 
 volatile unsigned char active_seq[16] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 volatile uint8_t current_step = 0;
@@ -18,6 +19,22 @@ volatile uint8_t active_step_gate = 0;
 volatile uint8_t current_pitch = 0;
 
 void step_seq() {
+  switch(edit_mode) {
+    case NORMAL:
+      step_seq_on_normal();
+      break;
+    case SCALE:
+      step_seq_on_edit_scale();
+      break;
+    case PATTERN:
+      step_seq_on_edit_pattern();
+      break;
+    default:
+      break;
+  }
+}
+
+void step_seq_on_normal(){
   if (divide_idx < divide_count) {
     ++divide_idx;
     return;
@@ -47,7 +64,42 @@ void step_seq() {
   }
   start_gate_timer();
 
-  memset((ControllerValue*)&changed_value_flags, 0, sizeof(ControllerValue));
+  changed_value_flags = 0;
+  sei();
+}
+
+static volatile char current_test_note = -1;
+void step_seq_on_edit_scale(){
+  cli();
+  char found = 0;
+  for (char i=0; i<12 && !found; ++i) {
+    if (edit_scale & (1<<i)) {
+      found = 1;
+    }
+  }
+  if (!found) {
+    current_test_note = -1;
+    sei();
+    return;
+  }
+  char count = 0;
+  current_test_note = (current_test_note+1) % 12;
+  while (!(edit_scale & (1<<current_test_note)) && count < 12) {
+    current_test_note = (current_test_note+1) % 12;
+    ++count;
+  }
+  current_pitch = current_test_note + 64;
+  start_gate_timer();
+  sei();
+}
+
+static volatile uint8_t current_test_pos = 0;
+void step_seq_on_edit_pattern(){
+  cli();
+  uint8_t value = edit_pattern[current_test_pos];
+  current_pitch = value + 64;
+  start_gate_timer();
+  current_test_pos = (current_test_pos+1) % 16;
   sei();
 }
 
@@ -89,7 +141,7 @@ void start_gate_timer() {
 
 void update_step_time() {
   if (current_values.v.swing > 0) {
-    uint16_t offset_interval = ((long)step_interval * current_values.v.swing) / 255 / 2;
+    uint16_t offset_interval = ((long)step_interval * current_values.v.swing) / 255;
     if (current_step % 2 == 0) {
       OCR1A = step_interval + offset_interval;
     } else {
@@ -138,7 +190,7 @@ void randomize_seq() {
 uint8_t prev_pitch = 255;
 void update_pitch() {
   prev_pitch = current_pitch;
-  int pattern_value = ((pgm_read_byte(&(scale_patterns[current_values.v.scale_pattern][current_step])) - 8) * current_values.v.scale_range);
+  int pattern_value = ((preset_info.pattern_preset.patterns[current_values.v.scale_pattern][current_step] - 8) * current_values.v.scale_range);
   int rand_value = (((int)current_values.v.scale_pattern_random * ((int)((rand() & 0xF000) >> 12) - 8)));
   int tmp_value = ((pattern_value + rand_value) / 5) + current_values.v.scale_shift;
   if (tmp_value < 0) {
@@ -148,7 +200,7 @@ void update_pitch() {
   // quantize
   int base_value = tmp_value / 12 * 12;
   int upper_value = tmp_value - base_value;
-  upper_value = pgm_read_byte(&(scale_table[current_values.v.scale_select][upper_value]));
+  upper_value = scale_table[current_values.v.scale_select][upper_value];
   int current_pitch_tmp = base_value + upper_value + (current_values.v.scale_transpose - 36);
   if (current_pitch_tmp > 119) {
     current_pitch = 119;

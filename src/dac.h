@@ -9,6 +9,8 @@
 #define BASE_HZ 440
 
 void output_osc_and_cv(uint16_t timer_count);
+void output_osc_and_cv_on_normal(uint16_t timer_count);
+void output_osc_and_cv_on_edit(uint16_t timer_count);
 void spi_init();
 void reset_phase_shift();
 void update_phase_shift();

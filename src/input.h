@@ -6,6 +6,25 @@
 #ifndef CQ_INPUT_H_
 #define CQ_INPUT_H_
 
+enum EditMode {NORMAL, SELECT, SCALE, PATTERN};
+
+#define CHG_VAL_FLAG_STEP_FILL 0
+#define CHG_VAL_FLAG_STEP_LENGTH 1
+#define CHG_VAL_FLAG_STEP_ROT 2
+#define CHG_VAL_FLAG_STEP_RAND 3
+#define CHG_VAL_FLAG_SCALE_SELECT 4
+#define CHG_VAL_FLAG_SCALE_SHIFT 5
+#define CHG_VAL_FLAG_SCALE_PATTERN 6
+#define CHG_VAL_FLAG_SCALE_TRANSPOSE 7
+#define CHG_VAL_FLAG_SCALE_RANGE 8
+#define CHG_VAL_FLAG_SCALE_PAT_RAND 9
+#define CHG_VAL_FLAG_SLIDE 10
+#define CHG_VAL_FLAG_SWING 11
+
+#define KNOB_VALUES_SIZE 12
+
+extern volatile enum EditMode edit_mode;
+
 enum RecMode {STOP, REC, PLAY};
 extern volatile enum RecMode rec_mode;
 
@@ -55,21 +74,40 @@ typedef struct {
   unsigned long last_leave;
 } ButtonHistory;
 
+typedef struct {
+  uint8_t knob_idx;
+  uint8_t count;
+  unsigned long last_tick;
+  unsigned long interval_tick;
+} KnobHistory;
+
 extern volatile ControllerState current_state;
 extern volatile ButtonHistory button_history;
+extern volatile KnobHistory knob_history;
 
 volatile ControllerValue recorded_values[64];
-volatile ControllerValue recorded_value_flags[64]; // 0 = not recorded, 1 = recorded
-volatile ControllerValue changed_value_flags; // 0 = not changed, 1 = changed
+volatile uint16_t changed_value_flags; // 0 = not changed, 1 = changed
 
-
-volatile static uint8_t knob_values[4][8];
+volatile static uint8_t knob_values[4][KNOB_VALUES_SIZE];
 volatile static uint8_t button_state[4];
+
+extern volatile uint8_t edit_preset_num;
+extern volatile uint8_t edit_pos;
+extern volatile uint16_t edit_scale;
+extern volatile uint8_t edit_pattern[16];
 
 void read_knob_values();
 void update_knob_values();
 void set_current_value(uint8_t value, uint8_t knob_idx);
+void set_current_value_on_normal(uint8_t value, uint8_t knob_idx);
+void set_current_value_on_select(uint8_t value, uint8_t knob_idx);
+void set_current_value_on_scale(uint8_t value, uint8_t knob_idx);
+void set_current_value_on_pattern(uint8_t value, uint8_t knob_idx);
 void press(uint8_t button_idx);
+void press_on_normal(uint8_t button_idx);
+void press_on_select(uint8_t button_idx);
+void press_on_scale(uint8_t button_idx);
+void press_on_pattern(uint8_t button_idx);
 void record_current_knob_values();
 void start_recording();
 void end_recording();
@@ -77,6 +115,11 @@ void clear_recording();
 void play_recorded_knob_values();
 void reset_all_input();
 void next_record_pos();
+
+void enter_edit_select_mode();
+void leave_edit_select_mode();
+void enter_edit_scale_mode();
+void enter_edit_pattern_mode();
 
 
 #endif /* CQ_INPUT_H_ */

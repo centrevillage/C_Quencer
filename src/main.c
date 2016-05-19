@@ -7,6 +7,8 @@
 #include "sequencer.h"
 #include "input.h"
 #include "led.h"
+#include "scale.h"
+#include "eeprom.h"
 
 void setup_pins() {
   // 0-4: LED, 5-7: switch in
@@ -36,6 +38,8 @@ void setup() {
 
   adc_init();
   spi_init();
+
+  load_preset();
 
   read_knob_values();
   update_knob_values();

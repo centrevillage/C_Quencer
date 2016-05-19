@@ -13,6 +13,9 @@ extern volatile uint8_t active_step_gate;
 extern volatile uint8_t current_pitch;
 
 void step_seq();
+void step_seq_on_normal();
+void step_seq_on_edit_scale();
+void step_seq_on_edit_pattern();
 void reset_seq();
 void set_divide(uint8_t divide);
 void set_step_interval(uint16_t tick);

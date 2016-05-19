@@ -169,6 +169,22 @@ volatile uint8_t is_request_update_phase_shift = 0;
 // ldac_pin = PB1
 // ss_pin = PB0
 void output_osc_and_cv(uint16_t timer_count) {
+  switch(edit_mode) {
+    case NORMAL:
+      output_osc_and_cv_on_normal(timer_count);
+      break;
+    case SELECT:
+      output_osc_and_cv_on_edit(timer_count);
+      break;
+    case PATTERN:
+      output_osc_and_cv_on_edit(timer_count);
+      break;
+    default:
+      break;
+  }
+}
+
+void output_osc_and_cv_on_normal(uint16_t timer_count){
   if (is_request_update_phase_shift) {
     phase_shift = prev_current_table_idx;
     is_request_update_phase_shift = 0;
@@ -180,7 +196,7 @@ void output_osc_and_cv(uint16_t timer_count) {
   if (current_values.v.slide > 0 && prev_pitch < 120 && active_seq[current_step]) {
     float prev_idx = pgm_read_float(&(pitch_to_table_index[prev_pitch]));
     if (prev_idx != current_idx) {
-      uint16_t slide_count = (prev_idx < current_idx) ? (((uint16_t)current_values.v.slide) * 32) : (((uint16_t)current_values.v.slide) * 48);
+      uint16_t slide_count = (prev_idx < current_idx) ? (((uint16_t)current_values.v.slide) * 64) : (((uint16_t)current_values.v.slide) * 96);
       if (slide_count > timer_count) {
         float slide_rate = ((float)timer_count/(float)slide_count);
         slide_rate = pgm_read_float(&(slide_table[(uint16_t)(slide_rate * SLIDE_TABLE_SIZE)]));
@@ -201,6 +217,17 @@ void output_osc_and_cv(uint16_t timer_count) {
   output_dac_b(cv_pitch*32);
 
   prev_current_table_idx = current_table_index;
+}
+
+void output_osc_and_cv_on_edit(uint16_t timer_count){
+  float current_idx = pgm_read_float(&(pitch_to_table_index[current_pitch]));
+  float cv_pitch = current_pitch;
+
+  uint16_t current_table_index = ((uint16_t)(current_idx*timer_count)%WAVETABLE_SIZE);
+  uint16_t current_value = pgm_read_word(&(wavetables[selected_wavetable_type][current_table_index]));
+
+  output_dac_a(current_value);
+  output_dac_b(cv_pitch*32);
 }
 
 void reset_phase_shift() {
