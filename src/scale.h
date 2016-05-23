@@ -4,7 +4,7 @@
 #define CQ_SCALE_H_
 
 extern const uint16_t scale_defs[16];
-extern char scale_table[16][12];
+extern volatile char scale_table[16][12];
 
 void update_scale_table(uint16_t scales[16]);
 

@@ -35,7 +35,7 @@ const uint16_t scale_defs[16] PROGMEM = {
   // blues
   0b0000011111101101,
   // chromatic
-  0b0000011111111111
+  0b0000111111111111
 };
 
 char is_scale_table_complete(char scale_table_works[24]) {
@@ -60,7 +60,7 @@ void update_scale_table(uint16_t scales[16]) {
         if (j < 6) {
           scale_table_works[j+18] = j+12;
         } else {
-          scale_table_works[j] = j-12;
+          scale_table_works[j-6] = j-12;
         }
       }
     }
@@ -87,4 +87,4 @@ void update_scale_table(uint16_t scales[16]) {
   }
 }
 
-char scale_table[16][12];
+char volatile scale_table[16][12];
