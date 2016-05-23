@@ -139,7 +139,7 @@ void set_current_value_on_normal(uint8_t value, uint8_t knob_idx){
           is_change_seq = 1;
           break;
         case FUNC:
-          current_values.v.step_rand = value / 2;
+          current_values.v.step_rand = value / 8;
           changed_value_flags |= 1<<CHG_VAL_FLAG_STEP_RAND;
           set_led_count(((value & 0xF0) >> 4) + 1);
           break;
