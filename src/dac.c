@@ -173,9 +173,7 @@ void output_osc_and_cv(uint16_t timer_count) {
     case NORMAL:
       output_osc_and_cv_on_normal(timer_count);
       break;
-    case SELECT:
-      output_osc_and_cv_on_edit(timer_count);
-      break;
+    case SCALE:
     case PATTERN:
       output_osc_and_cv_on_edit(timer_count);
       break;

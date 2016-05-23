@@ -71,6 +71,7 @@ void step_seq_on_normal(){
 static volatile char current_test_note = -1;
 void step_seq_on_edit_scale(){
   cli();
+  update_knob_values();
   char found = 0;
   for (char i=0; i<12 && !found; ++i) {
     if (edit_scale & (1<<i)) {
@@ -96,6 +97,7 @@ void step_seq_on_edit_scale(){
 static volatile uint8_t current_test_pos = 0;
 void step_seq_on_edit_pattern(){
   cli();
+  update_knob_values();
   uint8_t value = edit_pattern[current_test_pos];
   current_pitch = value + 64;
   start_gate_timer();
@@ -111,12 +113,14 @@ void start_trigger() {
 }
 
 void start_seq() {
+  current_state.start = 1;
   srand(button_history.last_tick);
   TCNT1 = 0;
   TCCR1B |= (1<<CS12); // divide 256
 }
 
 void stop_seq() {
+  current_state.start = 0;
   TCCR1B &= ~(1<<CS12);
   TCNT1 = 0;
 }

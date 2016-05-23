@@ -371,10 +371,8 @@ void press_on_normal(uint8_t button_idx) {
         reset_seq();
       } else {
         if (current_state.start) {
-          current_state.start = 0;
           stop_seq();
         } else {
-          current_state.start = 1;
           start_seq();
         }
       } 
@@ -490,25 +488,33 @@ void press_on_pattern(uint8_t button_idx){
 void enter_edit_select_mode() {
   edit_mode = SELECT;
   set_display_mode(EDIT_SELECT);
-  stop_seq();
+  if (current_state.start) {
+    stop_seq();
+  }
 }
 
 void leave_edit_select_mode() {
   edit_mode = NORMAL;
   set_display_mode(SEQ);
-  stop_seq();
+  if (current_state.start) {
+    stop_seq();
+  }
 }
 
 void enter_edit_scale_mode(){
   edit_mode = SCALE;
   set_display_mode(EDIT_SCALE_SELECT);
-  start_seq();
+  if (!current_state.start) {
+    start_seq();
+  }
 }
 
 void enter_edit_pattern_mode(){
   edit_mode = PATTERN;
   set_display_mode(EDIT_PATTERN_SELECT);
-  start_seq();
+  if (!current_state.start) {
+    start_seq();
+  }
 }
 
 void leave(uint8_t button_idx) {
@@ -627,6 +633,9 @@ void end_recording() {
 }
 
 void play_recorded_knob_values() {
+  if (record_length == 0) {
+    return;
+  }
   uint8_t is_change_seq = 0;
   for (int i = 0; i < sizeof(ControllerValue); ++i) {
     if (!(changed_value_flags & (1<<i)) && recorded_values[record_pos].values[i] != 0xFF) {
@@ -663,6 +672,7 @@ void reset_all_input() {
   record_end = 0;
   record_length = 0;
   record_pos = 0;
+  play_pos = 0;
   rec_mode = STOP;
   func_mode = NONE;
   button_history.mode = NONE;
