@@ -40,18 +40,26 @@ void read_knob_values() {
 static volatile uint16_t prev_values[] = {0, 0, 0, 0};
 void update_knob_values() {
   uint16_t prev_value;
+  uint16_t new_value_sum;
   uint16_t new_value;
   for (uint8_t i = 0; i < 4; ++i) {
     prev_value = prev_values[i];
-    new_value = 0;
+    new_value_sum = 0;
     for (uint8_t j = 0; j < KNOB_VALUES_SIZE; ++j) {
-      new_value += knob_values[i][j];
+      new_value_sum += knob_values[i][j];
     }
-    new_value = new_value / KNOB_VALUES_SIZE;
+    int diff = new_value_sum - prev_value * KNOB_VALUES_SIZE;
+    if (diff >= KNOB_VALUES_SIZE) {
+      new_value = prev_value + diff / KNOB_VALUES_SIZE;
+    } else if (diff <= -KNOB_VALUES_SIZE) {
+      new_value = prev_value - ((-diff) / KNOB_VALUES_SIZE);
+    } else {
+      new_value = prev_value;
+    }
     if (new_value != prev_value) {
       set_current_value((uint8_t)new_value, i);
+      prev_values[i] = new_value;
     }
-    prev_values[i] = new_value;
   }
 }
 
