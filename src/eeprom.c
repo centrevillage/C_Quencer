@@ -1,4 +1,4 @@
-#include <avr/pgmspace.h> 
+#include <avr/pgmspace.h>
 #include "eeprom.h"
 #include "pattern.h"
 #include "scale.h"
@@ -54,7 +54,7 @@ void reset_pattern_preset(uint8_t preset_num){
 }
 
 void try_reset_eeprom() {
-  const char* symbol = "C_Quencer 0.4"; 
+  const char* symbol = "C_Quencer 0.4";
   char id_str[13];
   for (int i=0; i<13; ++i) {
     eeprom_busy_wait();
@@ -65,7 +65,7 @@ void try_reset_eeprom() {
       eeprom_busy_wait();
       eeprom_write_byte((uint8_t*)i, 0);
     }
-    eeprom_write_block(symbol, (uint8_t*)1000, sizeof(symbol));	
+    eeprom_write_block(symbol, (uint8_t*)1000, sizeof(symbol));
     for (int i=0; i<13; ++i) {
       eeprom_busy_wait();
       eeprom_write_byte((uint8_t*)(i+1000), symbol[i]);
@@ -81,24 +81,24 @@ void load_preset(){
   addr = 0;
 
   eeprom_busy_wait();
-  preset_info.scale_preset.record_flag = eeprom_read_word((uint16_t *)addr);	
-  addr += 2; 
+  preset_info.scale_preset.record_flag = eeprom_read_word((uint16_t *)addr);
+  addr += 2;
 
   for (int i=0; i<16; ++i) {
     eeprom_busy_wait();
-    preset_info.scale_preset.scales[i] = eeprom_read_word((uint16_t *)addr);	
+    preset_info.scale_preset.scales[i] = eeprom_read_word((uint16_t *)addr);
     addr += 2;
   }
 
   eeprom_busy_wait();
-  preset_info.pattern_preset.record_flag = eeprom_read_word((uint16_t *)addr);	
-  addr += 2; 
+  preset_info.pattern_preset.record_flag = eeprom_read_word((uint16_t *)addr);
+  addr += 2;
 
   for (int i=0; i<16; ++i) {
     for (int j=0; j<16; ++j) {
       eeprom_busy_wait();
-      preset_info.pattern_preset.patterns[i][j] = eeprom_read_byte((uint8_t *)addr);	
-      ++addr; 
+      preset_info.pattern_preset.patterns[i][j] = eeprom_read_byte((uint8_t *)addr);
+      ++addr;
     }
   }
 

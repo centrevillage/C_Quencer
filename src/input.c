@@ -49,10 +49,10 @@ void update_knob_values() {
     }
     new_value = new_value / KNOB_VALUES_SIZE;
     if (new_value != prev_value) {
-      set_current_value((uint8_t)new_value, i); 
+      set_current_value((uint8_t)new_value, i);
     }
     prev_values[i] = new_value;
-  } 
+  }
 }
 
 void reset_knob_history(uint8_t knob_idx) {
@@ -375,7 +375,7 @@ void press_on_normal(uint8_t button_idx) {
         } else {
           start_seq();
         }
-      } 
+      }
       break;
     case 2:
       if (func_mode == FUNC) {
@@ -556,7 +556,7 @@ ISR(PCINT2_vect) {
       button_state[i] = 0;
     }
   }
-  return;	
+  return;
 };
 
 // TING IN = PC4, PCINT12
@@ -569,7 +569,7 @@ ISR(PCINT1_vect) {
       }
       step_seq();
     }
-  }	
+  }
   if (bit_is_clear(PINC, 5)) {
     if (!button_state[3]) {
       press(3);
@@ -581,7 +581,7 @@ ISR(PCINT1_vect) {
     }
     button_state[3] = 0;
   }
-  return;	
+  return;
 };
 
 
@@ -616,13 +616,13 @@ void record_current_knob_values() {
   }
 
   if (record_length < 64) {
-    record_length++;  
+    record_length++;
   }
 }
 
 void start_recording() {
   record_start = record_pos;
-  record_length = 0;  
+  record_length = 0;
 }
 
 void end_recording() {

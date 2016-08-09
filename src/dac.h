@@ -6,7 +6,6 @@
 #define LDAC_MASK 0b00000010
 #define SS_MASK   0b00000001
 #define LDAC_SS_MASK 0b00000011
-#define BASE_HZ 440
 
 void output_osc_and_cv(uint16_t timer_count);
 void output_osc_and_cv_on_normal(uint16_t timer_count);

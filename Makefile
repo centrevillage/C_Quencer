@@ -10,7 +10,6 @@
 ###############################################################################
 
 # original src: https://gist.github.com/entrity/5424505
-# #tack over flow: http://stackoverflow.com/questions/13260508/using-the-arduino-libraries-for-regular-avr-code
 
 SRC_DIR=src/
 BUILD_DIR=./build/

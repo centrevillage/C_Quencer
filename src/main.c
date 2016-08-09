@@ -60,8 +60,8 @@ void loop() {
 // from Arduino ==
 int main(void) {
   timer_init();
-	setup();
+  setup();
   sei();
-	for (;;) { loop(); }
-	return 0;
+  for (;;) { loop(); }
+  return 0;
 }
