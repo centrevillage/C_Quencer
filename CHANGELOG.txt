@@ -1,0 +1,8 @@
+ver 0.5:
+* stabilize knob value reading
+
+ver 0.4:
+* add preset edit mode (scale and pitch pattern)
+
+ver 0.3:
+* first release ver
