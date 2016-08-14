@@ -18,6 +18,9 @@ volatile uint8_t  divide_idx = 1;
 volatile uint8_t active_step_gate = 0;
 volatile uint8_t current_pitch = 0;
 
+static uint8_t _step = 0;
+static uint8_t seq_start_shift = 0;
+
 void step_seq() {
   switch(edit_mode) {
     case NORMAL:
@@ -42,10 +45,12 @@ void step_seq_on_normal(){
   cli();
   divide_idx = 1;
 
-  if (current_step < (current_values.v.step_length-1)) {
-    ++current_step;
+  if (_step < (current_values.v.step_length-1)) {
+    ++_step;
+    current_step = (_step + seq_start_shift) % 16;
   } else {
-    current_step = 0;
+    _step = 0;
+    current_step = seq_start_shift;
     update_seq_pattern();
   }
   update_knob_values();
@@ -126,7 +131,8 @@ void stop_seq() {
 }
 
 void reset_seq() {
-  current_step = 16; // next -> 0
+  _step = 16; // next -> 0
+  current_step = seq_start_shift > 0 ? seq_start_shift - 1 : 16;
 }
 
 void start_gate_timer() {
@@ -171,11 +177,26 @@ void update_seq_pattern() {
   uint16_t euclid_seq = pgm_read_word(&(euclid_seq_table[current_values.v.step_length-1][current_values.v.step_fill]));
   uint8_t steplen = current_values.v.step_length;
   uint8_t steprot = current_values.v.step_rot;
-  for (int i = 0; i < 16; ++i) {
-    if (i < steplen && steprot > 0) {
-      active_seq[i] = !!(euclid_seq & (1 << ((i + steprot)%steplen)));
-    } else {
-      active_seq[i] = !!(euclid_seq & (1 << i));
+  if (steprot >= 16) {
+    // rot start
+    steprot = steprot - 16;
+    seq_start_shift = steprot;
+    for (int i = 0; i < 16; ++i) {
+      if (i < steplen && steprot > 0) {
+        active_seq[(i+seq_start_shift)%16] = !!(euclid_seq & (1 << ((i+steprot)%steplen)));
+      } else {
+        active_seq[(i+seq_start_shift)%16] = !!(euclid_seq & (1 << i));
+      }
+    }
+  } else {
+    // rot trigger
+    seq_start_shift = 0;
+    for (int i = 0; i < 16; ++i) {
+      if (i < steplen && steprot > 0) {
+        active_seq[i] = !!(euclid_seq & (1 << ((i + steprot)%steplen)));
+      } else {
+        active_seq[i] = !!(euclid_seq & (1 << i));
+      }
     }
   }
   randomize_seq();
@@ -183,9 +204,10 @@ void update_seq_pattern() {
 
 void randomize_seq() {
   if (current_values.v.step_rand > 0) {
-    for (int i = 0; i < current_values.v.step_length; ++i) {
+    for (uint8_t i = 0; i < current_values.v.step_length; ++i) {
       if ((uint8_t)(rand() >> 8) < current_values.v.step_rand) {
-        active_seq[i] = !active_seq[i];
+        uint8_t step = (i + seq_start_shift) % 16;
+        active_seq[step] = !active_seq[step];
       }
     }
   }

@@ -131,7 +131,7 @@ void set_current_value_on_normal(uint8_t value, uint8_t knob_idx){
           is_change_seq = 1;
           break;
         case HID:
-          current_values.v.slide = value / 2;
+          current_values.v.slide = (value & 0xFE) >> 1;
           changed_value_flags |= 1<<CHG_VAL_FLAG_SLIDE;
           set_led_count(((value & 0xF0) >> 4) + 1);
           break;
@@ -142,17 +142,17 @@ void set_current_value_on_normal(uint8_t value, uint8_t knob_idx){
     case 1: // rot / rand / swing
       switch (func_mode) {
         case NONE:
-          current_values.v.step_rot = (value & 0xF0) >> 4;
+          current_values.v.step_rot = (value & 0xF8) >> 3;
           changed_value_flags |= 1<<CHG_VAL_FLAG_STEP_ROT;
           is_change_seq = 1;
           break;
         case FUNC:
-          current_values.v.step_rand = value / 8;
+          current_values.v.step_rand = (value & 0xF8) >> 3;
           changed_value_flags |= 1<<CHG_VAL_FLAG_STEP_RAND;
           set_led_count(((value & 0xF0) >> 4) + 1);
           break;
         case HID:
-          current_values.v.swing = value / 2;
+          current_values.v.swing = (value & 0xFE) >> 1;
           changed_value_flags |= 1<<CHG_VAL_FLAG_SWING;
           set_led_count(((value & 0xF0) >> 4) + 1);
           break;
@@ -171,7 +171,7 @@ void set_current_value_on_normal(uint8_t value, uint8_t knob_idx){
           set_display_mode(TRANSPOSE);
           break;
         case HID:
-          current_values.v.scale_shift = value / 4 + 16;
+          current_values.v.scale_shift = ((value & 0xFC) >> 2) + 16;
           changed_value_flags |= 1<<CHG_VAL_FLAG_SCALE_SHIFT;
           set_led_count(((value & 0xF0) >> 4) + 1);
           break;
