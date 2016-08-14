@@ -21,7 +21,7 @@ enum EditMode {NORMAL, SELECT, SCALE, PATTERN};
 #define CHG_VAL_FLAG_SLIDE 10
 #define CHG_VAL_FLAG_SWING 11
 
-#define KNOB_VALUES_SIZE 12
+#define KNOB_VALUES_SIZE 8
 
 extern volatile enum EditMode edit_mode;
 
