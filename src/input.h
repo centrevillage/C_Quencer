@@ -22,6 +22,7 @@ enum EditMode {NORMAL, SELECT, SCALE, PATTERN};
 #define CHG_VAL_FLAG_SWING 11
 
 #define KNOB_VALUES_SIZE 8
+#define RECORDED_VALUES_SIZE 64
 
 extern volatile enum EditMode edit_mode;
 
@@ -36,8 +37,6 @@ typedef struct {
   uint8_t start; // on sequence running
   uint8_t func;   // on sub function
   uint8_t hid;   // on hidden function
-  uint8_t func_lock; // on sub function lock
-  uint8_t data;
 } ControllerState;
 
 enum FuncMode get_func_mode();
@@ -85,7 +84,7 @@ extern volatile ControllerState current_state;
 extern volatile ButtonHistory button_history;
 extern volatile KnobHistory knob_history;
 
-volatile ControllerValue recorded_values[64];
+volatile ControllerValue recorded_values[RECORDED_VALUES_SIZE];
 volatile uint16_t changed_value_flags; // 0 = not changed, 1 = changed
 
 volatile static uint8_t knob_values[4][KNOB_VALUES_SIZE];
@@ -114,7 +113,6 @@ void end_recording();
 void clear_recording();
 void play_recorded_knob_values();
 void reset_all_input();
-void next_record_pos();
 
 void enter_edit_select_mode();
 void leave_edit_select_mode();

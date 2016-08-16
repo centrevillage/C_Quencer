@@ -58,7 +58,6 @@ void step_seq_on_normal(){
     play_recorded_knob_values();
     if (rec_mode == REC) {
       record_current_knob_values();
-      next_record_pos();
     } else {
       next_play_pos();
     }

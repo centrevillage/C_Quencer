@@ -23,6 +23,11 @@ volatile uint8_t edit_pattern[16];
 volatile static uint8_t current_knob_idx = 0;
 volatile static uint8_t current_knob_value_idx = 0;
 
+volatile static uint8_t record_start = 0;
+volatile static uint8_t record_end = 0;
+volatile static uint8_t record_length = 0;
+volatile static uint8_t record_pos = 0;
+volatile static uint8_t play_pos = 0;
 
 // input task
 void read_knob_values() {
@@ -85,6 +90,10 @@ void update_knob_history(uint8_t knob_idx) {
 
 uint8_t is_multi_tap(uint8_t button_idx, uint8_t count) {
   return button_history.button_idx == button_idx && button_history.count >= count;
+}
+
+uint8_t is_long_press(uint8_t button_idx, unsigned long interval_tick) {
+  return button_history.button_idx == button_idx && (button_history.last_leave - button_history.last_tick) > interval_tick;
 }
 
 uint8_t is_knob_multi(uint8_t knob_idx, uint8_t count) {
@@ -293,7 +302,7 @@ void set_current_value_on_pattern(uint8_t value, uint8_t knob_idx){
 enum FuncMode get_func_mode() {
   if (current_state.hid) {
     return HID;
-  } else if (current_state.func_lock ^ current_state.func) {
+  } else if (current_state.func) {
     return FUNC;
   }
   return NONE;
@@ -427,9 +436,9 @@ void press_on_normal(uint8_t button_idx) {
           start_recording();
         } else {
           rec_mode = PLAY;
+          play_pos = 0;
           end_recording();
         }
-        current_state.rec = !current_state.rec;
       }
       break;
     default:
@@ -525,6 +534,35 @@ void enter_edit_pattern_mode(){
   }
 }
 
+void leave_on_rec_mode() {
+  // quantized rec
+  uint8_t quantized_len = ((record_length + current_values.v.step_length/2) / current_values.v.step_length) * current_values.v.step_length;
+  while (quantized_len > RECORDED_VALUES_SIZE) {
+    quantized_len -= current_values.v.step_length;
+  }
+  char rec_len_diff = record_length - quantized_len;
+  if (record_length > quantized_len) {
+    record_length = quantized_len;
+    char record_pos_tmp =  record_pos - (record_length - quantized_len);
+    if (record_pos_tmp < 0) {
+      record_pos = RECORDED_VALUES_SIZE + record_pos_tmp;
+    } else {
+      record_pos = record_pos_tmp;
+    }
+    play_pos = rec_len_diff;
+  } else if (record_length < quantized_len) {
+    changed_value_flags = 0;
+    while (record_length < quantized_len) {
+      record_current_knob_values();
+    }
+    play_pos = record_length + rec_len_diff;
+  } else {
+    play_pos = 0;
+  }
+  rec_mode = PLAY;
+  end_recording();
+}
+
 void leave(uint8_t button_idx) {
   update_button_history_on_leave(button_idx);
   switch(button_idx) {
@@ -537,6 +575,9 @@ void leave(uint8_t button_idx) {
       current_state.hid = 0;
       break;
     case 3:
+      if (rec_mode == REC && record_length > 7) {
+        leave_on_rec_mode();
+      }
       break;
     default:
       break;
@@ -593,25 +634,12 @@ ISR(PCINT1_vect) {
 };
 
 
-static volatile uint8_t record_start = 0;
-static volatile uint8_t record_end = 0;
-static volatile uint8_t record_length = 0;
-static volatile uint8_t record_pos = 0;
-static volatile uint8_t play_pos = 0;
-
-void next_record_pos() {
-  ++record_pos;
-  if (record_pos >= 64) {
-    record_pos = 0;
-  }
-}
-
 void next_play_pos() {
   ++play_pos;
   if (play_pos >= record_length) {
     play_pos = 0;
   }
-  record_pos = (play_pos + record_start) % 64;
+  record_pos = (play_pos + record_start) % RECORDED_VALUES_SIZE;
 }
 
 void record_current_knob_values() {
@@ -623,21 +651,27 @@ void record_current_knob_values() {
     }
   }
 
-  if (record_length < 64) {
+  if (record_length < RECORDED_VALUES_SIZE) {
     record_length++;
+  }
+
+  ++record_pos;
+  if (record_pos >= RECORDED_VALUES_SIZE) {
+    record_pos = 0;
   }
 }
 
 void start_recording() {
   record_start = record_pos;
   record_length = 0;
+  current_state.rec = 1;
 }
 
 void end_recording() {
   record_end = record_pos;
   int record_start_tmp = ((int)record_end) - ((int)record_length);
-  record_start = (uint8_t)(record_start_tmp < 0 ? (record_start_tmp + 64) : record_start_tmp);
-  play_pos = 0;
+  record_start = (uint8_t)(record_start_tmp < 0 ? (record_start_tmp + RECORDED_VALUES_SIZE) : record_start_tmp);
+  current_state.rec = 0;
 }
 
 void play_recorded_knob_values() {
@@ -659,7 +693,7 @@ void play_recorded_knob_values() {
 }
 
 void clear_recording() {
-  memset(&recorded_values, 0xFF, sizeof(ControllerValue) * 64);
+  memset(&recorded_values, 0xFF, sizeof(ControllerValue) * RECORDED_VALUES_SIZE);
 }
 
 void reset_all_input() {
@@ -688,7 +722,7 @@ void reset_all_input() {
   memset(knob_values, 0, 4*KNOB_VALUES_SIZE);
   memset(button_state, 0, 4);
   changed_value_flags = 0;
-  memset(&recorded_values, 0, sizeof(ControllerValue) * 64);
+  memset(&recorded_values, 0, sizeof(ControllerValue) * RECORDED_VALUES_SIZE);
 
   edit_preset_num = 0;
   edit_pos = 0;
