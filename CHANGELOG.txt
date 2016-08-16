@@ -1,3 +1,6 @@
+Ver 0.6:
+* add start position rotation function (upper value of "ROT")
+
 ver 0.5:
 * stabilize knob value reading
 
