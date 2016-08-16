@@ -1,3 +1,6 @@
+Ver 0.7:
+* add quantized recording function (long press "REC" (above 8 step time))
+
 Ver 0.6:
 * add start position rotation function (upper value of "ROT")
 
