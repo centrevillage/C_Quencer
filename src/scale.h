@@ -6,6 +6,6 @@
 extern const uint16_t scale_defs[16];
 extern volatile char scale_table[16][12];
 
-void update_scale_table(uint16_t scales[16]);
+void update_scale_table(volatile uint16_t scales[16]);
 
 #endif /* CQ_SCALE_H_ */

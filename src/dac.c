@@ -1,137 +1,11 @@
 #include "dac.h"
 #include "input.h"
-#include "sequencer.h"
+#include "variables.h"
 #include "wavetable.h"
-#include "slide_table.h"
+#include "pitch_cycle.h"
+#include "cycle_speed.h"
 
 #include <avr/pgmspace.h>
-
-// ピッチを1 tick(timer1) = (16us) あたりのtable index移動量として表現
-// C1 - B8
-static const float pitch_to_table_index[120] PROGMEM = {
-  0.1339522894339065,
-  0.14191750706015852,
-  0.15035636117371268,
-  0.15929701566570542,
-  0.1687693091393894,
-  0.17880485449369798,
-  0.18943714442835682,
-  0.20070166322265562,
-  0.2126360051609319,
-  0.22528,
-  0.23867584589726204,
-  0.25286825024313553,
-  0.267904578867813,
-  0.28383501412031703,
-  0.30071272234742535,
-  0.31859403133141084,
-  0.3375386182787788,
-  0.35760970898739597,
-  0.37887428885671365,
-  0.40140332644531124,
-  0.4252720103218638,
-  0.45056,
-  0.4773516917945241,
-  0.505736500486271,
-  0.535809157735626,
-  0.5676700282406341,
-  0.6014254446948506,
-  0.6371880626628217,
-  0.6750772365575577,
-  0.7152194179747919,
-  0.7577485777134273,
-  0.8028066528906226,
-  0.8505440206437276,
-  0.90112,
-  0.9547033835890482,
-  1.011473000972542,
-  1.071618315471252,
-  1.1353400564812681,
-  1.2028508893897012,
-  1.2743761253256434,
-  1.3501544731151154,
-  1.4304388359495839,
-  1.5154971554268546,
-  1.6056133057812452,
-  1.7010880412874552,
-  1.80224,
-  1.9094067671780959,
-  2.0229460019450847,
-  2.143236630942504,
-  2.2706801129625362,
-  2.4057017787794033,
-  2.5487522506512867,
-  2.70030894623023,
-  2.860877671899168,
-  3.030994310853709,
-  3.2112266115624895,
-  3.4021760825749108,
-  3.60448,
-  3.8188135343561918,
-  4.045892003890169,
-  4.286473261885008,
-  4.5413602259250725,
-  4.8114035575588066,
-  5.0975045013025735,
-  5.40061789246046,
-  5.721755343798336,
-  6.061988621707418,
-  6.422453223124979,
-  6.8043521651498216,
-  7.20896,
-  7.6376270687123835,
-  8.091784007780339,
-  8.572946523770016,
-  9.082720451850145,
-  9.622807115117613,
-  10.195009002605147,
-  10.80123578492092,
-  11.443510687596673,
-  12.123977243414837,
-  12.844906446249958,
-  13.608704330299643,
-  14.41792,
-  15.275254137424767,
-  16.183568015560677,
-  17.14589304754003,
-  18.16544090370029,
-  19.245614230235226,
-  20.390018005210294,
-  21.60247156984184,
-  22.887021375193346,
-  24.247954486829673,
-  25.689812892499916,
-  27.217408660599286,
-  28.83584,
-  30.550508274849555,
-  32.36713603112134,
-  34.29178609508006,
-  36.330881807400594,
-  38.49122846047043,
-  40.78003601042059,
-  43.20494313968371,
-  45.77404275038667,
-  48.49590897365935,
-  51.37962578499987,
-  54.434817321198544,
-  57.67168,
-  61.10101654969911,
-  64.73427206224268,
-  68.58357219016013,
-  72.66176361480119,
-  76.98245692094086,
-  81.56007202084118,
-  86.40988627936741,
-  91.54808550077334,
-  96.9918179473187,
-  102.75925156999973,
-  108.86963464239709,
-  115.34336,
-  122.20203309939822,
-  129.46854412448536
-};
-
-volatile static uint8_t phase_shift = 0;
 
 void spi_init() {
   //Enable SPI, Master, set clock rate fck/2 = 8MHz
@@ -139,7 +13,7 @@ void spi_init() {
   SPSR = (1<<SPI2X);
 }
 
-static inline uint8_t trans_spi(uint8_t data) {
+inline uint8_t trans_spi(uint8_t data) {
   SPDR = data;
   loop_until_bit_is_set(SPSR, SPIF);
   data = SPDR;
@@ -160,78 +34,122 @@ void output_dac_b(uint16_t data) {
   PORTB = (PORTB & ~LDAC_SS_MASK) | SS_MASK;
 }
 
-static uint16_t prev_current_table_idx = 0;
-volatile uint8_t is_request_update_phase_shift = 0;
-
 //C0- B9 = 0 - 119
 //A5(69) = 440
 //1 timer count = 62.5kHz = 1/ 62500 s = 16 us / 1 cycle
 // ldac_pin = PB1
 // ss_pin = PB0
-void output_osc_and_cv(uint16_t timer_count) {
+void output_osc_and_cv(uint16_t interval_count, uint8_t delta_tick) {
   switch(edit_mode) {
     case NORMAL:
-      output_osc_and_cv_on_normal(timer_count);
+      output_osc_and_cv_on_normal(interval_count, delta_tick);
       break;
     case SCALE:
     case PATTERN:
-      output_osc_and_cv_on_edit(timer_count);
+      output_osc_and_cv_on_edit(interval_count, delta_tick);
       break;
     default:
       break;
   }
 }
 
-void output_osc_and_cv_on_normal(uint16_t timer_count){
-  if (is_request_update_phase_shift) {
-    phase_shift = prev_current_table_idx;
-    is_request_update_phase_shift = 0;
-  }
-  float current_idx = pgm_read_float(&(pitch_to_table_index[current_pitch]));
-  float cv_pitch = current_pitch;
 
-  // calculate slide rate
-  if (current_values.v.slide > 0 && prev_pitch < 120 && active_seq[current_step]) {
-    float prev_idx = pgm_read_float(&(pitch_to_table_index[prev_pitch]));
-    if (prev_idx != current_idx) {
-      uint16_t slide_count = (prev_idx < current_idx) ? (((uint16_t)current_values.v.slide) * 64) : (((uint16_t)current_values.v.slide) * 96);
-      if (slide_count > timer_count) {
-        float slide_rate = ((float)timer_count/(float)slide_count);
-        slide_rate = pgm_read_float(&(slide_table[(uint16_t)(slide_rate * SLIDE_TABLE_SIZE)]));
-        current_idx = (current_idx - prev_idx) * slide_rate + prev_idx;
-        cv_pitch = (current_pitch - prev_pitch) * slide_rate + prev_pitch;
-      }
+uint16_t phase_count_buf = 0;
+volatile uint16_t phase_ticks = 0;
+volatile uint16_t prev_phase_ticks = 0;
+volatile uint8_t phase_direction = 1;
+volatile uint16_t wave1_count_in_cycle = 0;
+volatile uint16_t wave2_count_in_cycle = 0;
+volatile uint16_t current_table_index1 = 0;
+volatile uint16_t current_table_index2 = 0;
+void output_osc_and_cv_on_normal(uint16_t interval_count, uint8_t delta_tick){
+  cli();
+  uint16_t cv_pitch = current_pitch1_dec;
+
+  uint16_t cycle_length1 = pgm_read_word(&(pitch_to_cycle[current_note_num1]));
+  uint16_t cycle_length2 = pgm_read_word(&(pitch_to_cycle[current_note_num2]));
+
+  if (slide_speed > 0 && slide_pitch1 != current_pitch1_dec) { // pitch slide
+    slide_pitch1 = ((uint32_t)slide_speed * current_pitch1_dec + (uint32_t)(256 - slide_speed) * slide_pitch1 + 128) / 256;
+    slide_pitch2 = ((uint32_t)slide_speed * current_pitch2_dec + (uint32_t)(256 - slide_speed) * slide_pitch2 + 128) / 256;
+    cv_pitch = slide_pitch1;
+    uint8_t slide_oct1 = slide_pitch1 / (12*256);
+    uint16_t slide_note1 = slide_pitch1 % (12*256);
+    uint8_t slide_oct2 = slide_pitch2 / (12*256);
+    uint16_t slide_note2 = slide_pitch2 % (12*256);
+    uint32_t val1 = pgm_read_word(&(cycle_speed_table[slide_note1]));
+    uint32_t val2 = pgm_read_word(&(cycle_speed_table[slide_note2]));
+    slide_buf_value1 += (val1 * interval_count) << slide_oct1;
+    slide_buf_value2 += (val2 * interval_count) << slide_oct2;
+    uint16_t slide_buf_value2_count = slide_buf_value2 >> 12;
+    wave1_count_in_cycle = (wave1_count_in_cycle + (slide_buf_value1 >> 12)) % 7645;
+    wave2_count_in_cycle = (wave2_count_in_cycle + (slide_buf_value2 >> 12)) % 7645;
+    slide_buf_value1 &= 0x00000FFF;
+    slide_buf_value2 &= 0x00000FFF;
+  } else {
+    wave1_count_in_cycle = (wave1_count_in_cycle + (interval_count << current_oct1)) % cycle_length1;
+    wave2_count_in_cycle = (wave2_count_in_cycle + (interval_count << current_oct2)) % cycle_length2;
+  }
+
+  current_table_index1 = (uint32_t)wave1_count_in_cycle * WAVETABLE_SIZE / cycle_length1;
+
+  uint16_t phase_shift2;
+  if (wave_phase_shift_cycle > 0) {
+    phase_count_buf += delta_tick << (wave_phase_shift_cycle-1);
+    uint16_t tmp_phase_count = phase_count_buf >> 4;
+    phase_ticks += tmp_phase_count;
+    phase_count_buf &= 0x0F;
+    if (prev_phase_ticks > phase_ticks) {
+      phase_direction = -phase_direction;
     }
+    if (phase_direction > 0) {
+      phase_shift2 = phase_ticks/(0xFFFF/(WAVETABLE_SIZE));
+    } else {
+      phase_shift2 = WAVETABLE_SIZE - phase_ticks/(0xFFFF/WAVETABLE_SIZE);
+    }
+  } else {
+    phase_shift2 = wave_phase_shift * (WAVETABLE_SIZE / 16);
   }
+  current_table_index2 = (((uint32_t)wave2_count_in_cycle * WAVETABLE_SIZE / cycle_length2) + phase_shift2) % WAVETABLE_SIZE;
 
-  uint16_t current_table_index = ((uint16_t)(current_idx*timer_count+phase_shift)%WAVETABLE_SIZE);
-  uint16_t current_value = pgm_read_word(&(wavetables[selected_wavetable_type][current_table_index]));
-  output_dac_a(current_value);
+  uint16_t wave1_value = pgm_read_word(&(wavetables[selected_wavetable_type1][current_table_index1]));
+  uint16_t wave2_value = pgm_read_word(&(wavetables[selected_wavetable_type2 & 0x03][(selected_wavetable_type2 & 0x04) ? (WAVETABLE_SIZE - 1 - current_table_index2) : current_table_index2]));
+
+  uint16_t current_value = wave1_value * wave1_volume + wave2_value * wave2_volume;
+  output_dac_a(current_value >> 3);
 
   // current_pitch(cv_pitch) = N pitch unit; 1 octave = 12 pitch unit
   // 128 pitch unit = 4096 dac value = 5 V pin out
   // 120 pitch unit = 5 * 120 / 128  = 4.68 V pin out
   // 4.68 V pin out -> analog gain x 2.17 -> 10V cv out
-  output_dac_b(cv_pitch*32);
-
-  prev_current_table_idx = current_table_index;
+  output_dac_b(cv_pitch >> 3);
+  sei();
 }
 
-void output_osc_and_cv_on_edit(uint16_t timer_count){
-  float current_idx = pgm_read_float(&(pitch_to_table_index[current_pitch]));
-  float cv_pitch = current_pitch;
-
-  uint16_t current_table_index = ((uint16_t)(current_idx*timer_count)%WAVETABLE_SIZE);
-  uint16_t current_value = pgm_read_word(&(wavetables[selected_wavetable_type][current_table_index]));
+void output_osc_and_cv_on_edit(uint16_t interval_count, uint8_t delta_tick){
+  uint16_t cycle_length1 = pgm_read_word(&(pitch_to_cycle[current_note_num1]));
+  wave1_count_in_cycle = (wave1_count_in_cycle + (interval_count << current_oct1)) % cycle_length1;
+  current_table_index1 = (uint32_t)wave1_count_in_cycle * WAVETABLE_SIZE / cycle_length1;
+  uint16_t current_value = pgm_read_word(&(wavetables[selected_wavetable_type1][current_table_index1]));
 
   output_dac_a(current_value);
-  output_dac_b(cv_pitch*32);
+  output_dac_b(current_pitch1*32);
 }
 
-void reset_phase_shift() {
-  phase_shift = 0;
+void reset_count_in_cycle() {
+  uint16_t cycle_length1 = pgm_read_word(&(pitch_to_cycle[current_note_num1]));
+  uint16_t cycle_length2 = pgm_read_word(&(pitch_to_cycle[current_note_num2]));
+  wave1_count_in_cycle = (uint32_t)current_table_index1 * cycle_length1 / WAVETABLE_SIZE;
+  wave2_count_in_cycle = (uint32_t)current_table_index2 * cycle_length2 / WAVETABLE_SIZE;
 }
 
-void update_phase_shift() {
-  is_request_update_phase_shift = 1;
+void reset_phase() {
+  prev_phase_ticks = 0;
+  phase_count_buf = 0;
+  phase_ticks = 0;
+  wave1_count_in_cycle = 0;
+  wave2_count_in_cycle = 0;
+  current_table_index1 = 0;
+  current_table_index2 = 0;
 }
+

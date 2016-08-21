@@ -1,4 +1,5 @@
 #include "input.h"
+#include "variables.h"
 #include "sequencer.h"
 #include "adc.h"
 #include "timer.h"
@@ -20,14 +21,14 @@ volatile uint8_t edit_pos;
 volatile uint16_t edit_scale;
 volatile uint8_t edit_pattern[16];
 
-volatile static uint8_t current_knob_idx = 0;
-volatile static uint8_t current_knob_value_idx = 0;
+static volatile uint8_t current_knob_idx = 0;
+static volatile uint8_t current_knob_value_idx = 0;
 
-volatile static uint8_t record_start = 0;
-volatile static uint8_t record_end = 0;
-volatile static uint8_t record_length = 0;
-volatile static uint8_t record_pos = 0;
-volatile static uint8_t play_pos = 0;
+static volatile uint8_t record_start = 0;
+static volatile uint8_t record_end = 0;
+static volatile uint8_t record_length = 0;
+static volatile uint8_t record_pos = 0;
+static volatile uint8_t play_pos = 0;
 
 // input task
 void read_knob_values() {
@@ -125,54 +126,63 @@ void set_current_value(uint8_t value, uint8_t knob_idx) {
 }
 
 void set_current_value_on_normal(uint8_t value, uint8_t knob_idx){
+  uint8_t tmp_value;
   uint8_t is_change_seq = 0;
   switch (knob_idx) {
-    case 0: // fill / len / slide
+    case 0: // fill / len / slide / wave select
       switch (func_mode) {
         case NONE:
-          current_values.v.step_fill = ((value & 0xF0) >> 4);
+          current_values.v.step_fill = value >> 4;
           changed_value_flags |= 1<<CHG_VAL_FLAG_STEP_FILL;
           is_change_seq = 1;
           break;
         case FUNC:
-          current_values.v.step_length = ((value & 0xF0) >> 4) + 1;
+          current_values.v.step_length = (value >> 4) + 1;
           changed_value_flags |= 1<<CHG_VAL_FLAG_STEP_LENGTH;
           is_change_seq = 1;
           break;
         case HID:
-          current_values.v.slide = (value & 0xFE) >> 1;
+          current_values.v.slide = value >> 4;
           changed_value_flags |= 1<<CHG_VAL_FLAG_SLIDE;
-          set_led_count(((value & 0xF0) >> 4) + 1);
+          set_led_count((value >> 4) + 1);
           break;
-        default:
+        case WAVE_SHAPE:
+          current_values.v.wave_select = value >> 3;
+          changed_value_flags |= 1<<CHG_VAL_FLAG_WAVE_SELECT;
+          set_display_mode(WAVE_SHAPE_SELECT);
           break;
       }
       break;
-    case 1: // rot / rand / swing
+    case 1: // rot / rand / swing / wave phase
       switch (func_mode) {
         case NONE:
-          current_values.v.step_rot = (value & 0xF8) >> 3;
+          current_values.v.step_rot = value >> 3;
           changed_value_flags |= 1<<CHG_VAL_FLAG_STEP_ROT;
           is_change_seq = 1;
           break;
         case FUNC:
-          current_values.v.step_rand = (value & 0xF8) >> 3;
+          current_values.v.step_rand = value >> 3;
           changed_value_flags |= 1<<CHG_VAL_FLAG_STEP_RAND;
-          set_led_count(((value & 0xF0) >> 4) + 1);
+          set_led_count((value >> 4) + 1);
           break;
         case HID:
-          current_values.v.swing = (value & 0xFE) >> 1;
+          current_values.v.swing = value >> 1;
           changed_value_flags |= 1<<CHG_VAL_FLAG_SWING;
-          set_led_count(((value & 0xF0) >> 4) + 1);
+          set_led_count((value >> 4) + 1);
+          break;
+        case WAVE_SHAPE:
+          current_values.v.wave_phase = value >> 3;
+          changed_value_flags |= 1<<CHG_VAL_FLAG_WAVE_PHASE;
+          set_led_count((value >> 3) + 1);
           break;
       }
       break;
-    case 2: // scale select / transpose / scale pattern random
+    case 2: // scale select / transpose / scale pattern random / wave balance
       switch (func_mode) {
         case NONE:
-          current_values.v.scale_select = (value & 0xF0) >> 4;
+          current_values.v.scale_select = value >> 4;
           changed_value_flags |= 1<<CHG_VAL_FLAG_SCALE_SELECT;
-          set_led_count(((value & 0xF0) >> 4) + 1);
+          set_led_count((value >> 4) + 1);
           break;
         case FUNC:
           current_values.v.scale_transpose = (uint16_t)value * 76 / 256;
@@ -180,28 +190,45 @@ void set_current_value_on_normal(uint8_t value, uint8_t knob_idx){
           set_display_mode(TRANSPOSE);
           break;
         case HID:
-          current_values.v.scale_shift = ((value & 0xFC) >> 2) + 16;
+          current_values.v.scale_shift = (value >> 2) + 16;
           changed_value_flags |= 1<<CHG_VAL_FLAG_SCALE_SHIFT;
-          set_led_count(((value & 0xF0) >> 4) + 1);
+          set_led_count((value >> 4) + 1);
+          break;
+        case WAVE_SHAPE:
+          tmp_value = value >> 4;
+          if (tmp_value < 4) {
+            tmp_value = 4;
+          } else if (tmp_value > 12) {
+            tmp_value = 12;
+          }
+          tmp_value -= 4;
+          current_values.v.wave_balance = tmp_value;
+          changed_value_flags |= 1<<CHG_VAL_FLAG_WAVE_BALANCE;
+          set_display_mode(WAVE_SHAPE_BALANCE);
           break;
       }
       break;
-    case 3: // scale pattern / scale range / scale pattern random
+    case 3: // scale pattern / scale range / scale pattern random / wave pitch duration
       switch (func_mode) {
         case NONE:
-          current_values.v.scale_pattern = (value & 0xF0) >> 4;
+          current_values.v.scale_pattern = value >> 4;
           changed_value_flags |= 1<<CHG_VAL_FLAG_SCALE_PATTERN;
-          set_led_count(((value & 0xF0) >> 4) + 1);
+          set_led_count((value >> 4) + 1);
           break;
         case FUNC:
-          current_values.v.scale_range = ((value & 0xF0) >> 4) + 1;
+          current_values.v.scale_range = (value >> 4) + 1;
           changed_value_flags |= 1<<CHG_VAL_FLAG_SCALE_RANGE;
-          set_led_count(((value & 0xF0) >> 4) + 1);
+          set_led_count((value >> 4) + 1);
           break;
         case HID:
-          current_values.v.scale_pattern_random = (value & 0xF0) >> 4;
+          current_values.v.scale_pattern_random = value >> 4;
           changed_value_flags |= 1<<CHG_VAL_FLAG_SCALE_PAT_RAND;
-          set_led_count(((value & 0xF0) >> 4) + 1);
+          set_led_count((value >> 4) + 1);
+          break;
+        case WAVE_SHAPE:
+          current_values.v.wave_pitch_duration = value >> 3;
+          changed_value_flags |= 1<<CHG_VAL_FLAG_WAVE_PITCH_DURATION;
+          set_led_count((value >> 3) + 1);
           break;
       }
       break;
@@ -300,7 +327,9 @@ void set_current_value_on_pattern(uint8_t value, uint8_t knob_idx){
 }
 
 enum FuncMode get_func_mode() {
-  if (current_state.hid) {
+  if (current_state.wave_shape) {
+    return WAVE_SHAPE;
+  } else if (current_state.hid) {
     return HID;
   } else if (current_state.func) {
     return FUNC;
@@ -384,14 +413,22 @@ void press_on_normal(uint8_t button_idx) {
       }
       break;
     case 1:
-      if (func_mode == FUNC) {
-        reset_seq();
-      } else {
-        if (current_state.start) {
-          stop_seq();
-        } else {
-          start_seq();
-        }
+      switch (func_mode) {
+        case NONE: // START/STOP
+          if (current_state.start) {
+            stop_seq();
+          } else {
+            start_seq();
+          }
+          break;
+        case FUNC: // RESET
+          reset_seq();
+          break;
+        case HID:
+          current_state.wave_shape = 1;
+          break;
+        default:
+          break;
       }
       break;
     case 2:
@@ -570,6 +607,7 @@ void leave(uint8_t button_idx) {
       current_state.func = 0;
       break;
     case 1:
+      current_state.wave_shape = 0;
       break;
     case 2:
       current_state.hid = 0;
@@ -643,7 +681,7 @@ void next_play_pos() {
 }
 
 void record_current_knob_values() {
-  for (int i = 0; i < sizeof(ControllerValue); ++i) {
+  for (uint8_t i = 0; i < sizeof(ControllerValue); ++i) {
     if (changed_value_flags & (1<<i)) {
       recorded_values[record_pos].values[i] = current_values.values[i];
     } else {
@@ -679,7 +717,7 @@ void play_recorded_knob_values() {
     return;
   }
   uint8_t is_change_seq = 0;
-  for (int i = 0; i < sizeof(ControllerValue); ++i) {
+  for (uint8_t i = 0; i < sizeof(ControllerValue); ++i) {
     if (!(changed_value_flags & (1<<i)) && recorded_values[record_pos].values[i] != 0xFF) {
       current_values.values[i] = recorded_values[record_pos].values[i];
       if (i < 3) { // step_fill, step_length, step_rot
@@ -709,6 +747,10 @@ void reset_all_input() {
   current_values.v.scale_pattern_random = 0;
   current_values.v.slide = 0;
   current_values.v.swing = 0;
+  current_values.v.wave_select = 0;
+  current_values.v.wave_balance = 4;
+  current_values.v.wave_phase = 0;
+  current_values.v.wave_pitch_duration = 0;
 
   record_start = 0;
   record_end = 0;
@@ -729,3 +771,4 @@ void reset_all_input() {
   edit_scale = 1;
   memset(&edit_pattern, 0, 16);
 }
+

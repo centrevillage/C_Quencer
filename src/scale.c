@@ -1,4 +1,5 @@
 #include <avr/pgmspace.h> 
+#include <string.h>
 #include "scale.h"
 
 const uint16_t scale_defs[16] PROGMEM = {
@@ -39,7 +40,7 @@ const uint16_t scale_defs[16] PROGMEM = {
 };
 
 char is_scale_table_complete(char scale_table_works[24]) {
-  for (char i=6; i<18; ++i) {
+  for (uint8_t i=6; i<18; ++i) {
     if (scale_table_works[i] == -128) {
       return 0;
     }
@@ -48,7 +49,7 @@ char is_scale_table_complete(char scale_table_works[24]) {
 }
 
 // 可能な限り均等にスケールノートをテーブルに配置
-void update_scale_table(uint16_t scales[16]) {
+void update_scale_table(volatile uint16_t scales[16]) {
   char scale_table_works[24]; // F0#-B0(0-5), C1-B9(6-17), C2-F2(18-23)
   for (char i=0; i<16; ++i) {
     memset(&scale_table_works, -128, sizeof(scale_table_works));

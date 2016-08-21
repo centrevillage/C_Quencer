@@ -7,15 +7,11 @@
 #define SS_MASK   0b00000001
 #define LDAC_SS_MASK 0b00000011
 
-void output_osc_and_cv(uint16_t timer_count);
-void output_osc_and_cv_on_normal(uint16_t timer_count);
-void output_osc_and_cv_on_edit(uint16_t timer_count);
+void output_osc_and_cv(uint16_t interval_count, uint8_t delta_tick);
+void output_osc_and_cv_on_normal(uint16_t interval_count, uint8_t delta_tick);
+void output_osc_and_cv_on_edit(uint16_t interval_count, uint8_t delta_tick);
 void spi_init();
-void reset_phase_shift();
-void update_phase_shift();
-
-static inline uint8_t trans_spi(uint8_t data);
-
-static const float pitch_to_table_index[120];
+void reset_count_in_cycle();
+void reset_phase();
 
 #endif /* CQ_DAC_H_ */

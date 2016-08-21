@@ -8,15 +8,10 @@
 #include "scale.h"
 #include "dac.h"
 #include "eeprom.h"
+#include "variables.h"
 
-volatile unsigned char active_seq[16] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-volatile uint8_t current_step = 0;
-// 1 tick(timer1) = 16 usec, 120 BPM = 2sec / 16 usec / 16 = 7812.5 tick;
-volatile uint16_t step_interval = 8000L;
-volatile uint8_t  divide_count = 1;
-volatile uint8_t  divide_idx = 1;
-volatile uint8_t active_step_gate = 0;
-volatile uint8_t current_pitch = 0;
+volatile uint8_t divide_idx = 1;
+volatile uint8_t pitch_duration_quantized = 0;
 
 static uint8_t _step = 0;
 static uint8_t seq_start_shift = 0;
@@ -53,6 +48,7 @@ void step_seq_on_normal(){
     current_step = seq_start_shift;
     update_seq_pattern();
   }
+  start_gate_timer();
   update_knob_values();
   if (rec_mode == PLAY || rec_mode == REC) {
     play_recorded_knob_values();
@@ -63,10 +59,10 @@ void step_seq_on_normal(){
     }
   }
   if (active_seq[current_step]) {
-    reset_phase_shift();
     update_pitch();
   }
-  start_gate_timer();
+  update_slide();
+  update_wave_shape();
 
   changed_value_flags = 0;
   sei();
@@ -93,7 +89,8 @@ void step_seq_on_edit_scale(){
     current_test_note = (current_test_note+1) % 12;
     ++count;
   }
-  current_pitch = current_test_note + 64;
+  current_pitch1 = current_test_note + 64;
+  update_oct_note();
   start_gate_timer();
   sei();
 }
@@ -103,7 +100,8 @@ void step_seq_on_edit_pattern(){
   cli();
   update_knob_values();
   uint8_t value = edit_pattern[current_test_pos];
-  current_pitch = value + 64;
+  current_pitch1 = value + 64;
+  update_oct_note();
   start_gate_timer();
   current_test_pos = (current_test_pos+1) % 16;
   sei();
@@ -121,6 +119,7 @@ void start_seq() {
   srand(button_history.last_tick);
   TCNT1 = 0;
   TCCR1B |= (1<<CS12); // divide 256
+  reset_phase();
 }
 
 void stop_seq() {
@@ -132,6 +131,7 @@ void stop_seq() {
 void reset_seq() {
   _step = 16; // next -> 0
   current_step = seq_start_shift > 0 ? seq_start_shift - 1 : 16;
+  reset_phase();
 }
 
 void start_gate_timer() {
@@ -149,6 +149,7 @@ void start_gate_timer() {
 }
 
 void update_step_time() {
+  prev_step_interval = OCR1A;
   if (current_values.v.swing > 0) {
     uint16_t offset_interval = ((long)step_interval * current_values.v.swing) / 255;
     if (current_step % 2 == 0) {
@@ -212,26 +213,102 @@ void randomize_seq() {
   }
 }
 
-uint8_t prev_pitch = 255;
+uint8_t quantize_pitch(uint8_t pitch) {
+  uint8_t result;
+  int base_value = pitch / 12 * 12;
+  int upper_value = pitch - base_value;
+  upper_value = scale_table[current_values.v.scale_select][upper_value];
+  int tmp = base_value + upper_value + (current_values.v.scale_transpose - 36);
+  if (tmp > 119) {
+    result = 119;
+  } else if (tmp < 0) {
+    result = 0;
+  } else {
+    result= tmp;
+  }
+  return result;
+}
+
 void update_pitch() {
-  prev_pitch = current_pitch;
+  prev_pitch1     = current_pitch1;
+  prev_pitch2     = current_pitch2;
+  prev_oct1       = current_oct1;
+  prev_note_num1  = current_note_num1;
+  prev_oct2       = current_oct2;
+  prev_note_num2  = current_note_num2;
   int pattern_value = ((preset_info.pattern_preset.patterns[current_values.v.scale_pattern][current_step] - 8) * current_values.v.scale_range);
-  int rand_value = (((int)current_values.v.scale_pattern_random * ((int)((rand() & 0xF000) >> 12) - 8)));
+  int rand_value = (((int)current_values.v.scale_pattern_random * ((int)(rand() >> 12) - 8)));
   int tmp_value = ((pattern_value + rand_value) / 5) + current_values.v.scale_shift;
   if (tmp_value < 0) {
     tmp_value = 0;
   }
 
-  // quantize
-  int base_value = tmp_value / 12 * 12;
-  int upper_value = tmp_value - base_value;
-  upper_value = scale_table[current_values.v.scale_select][upper_value];
-  int current_pitch_tmp = base_value + upper_value + (current_values.v.scale_transpose - 36);
-  if (current_pitch_tmp > 119) {
-    current_pitch = 119;
-  } else if (current_pitch_tmp < 0) {
-    current_pitch = 0;
+  current_pitch1 = quantize_pitch(tmp_value);
+  if (pitch_duration_quantized) {
+    current_pitch2 = quantize_pitch(current_pitch1 + pitch_duration);
   } else {
-    current_pitch = current_pitch_tmp;
+    uint8_t pitch_tmp = current_pitch1 + pitch_duration;
+    if (pitch_tmp > 119) {
+      pitch_tmp = 119;
+    }
+    current_pitch2 = pitch_tmp;
+  }
+  if (prev_pitch1 != current_pitch1 || prev_pitch2 != current_pitch2) {
+    update_oct_note();
+  }
+}
+
+void update_oct_note() {
+  prev_oct1       = current_oct1;
+  prev_note_num1  = current_note_num1;
+  prev_oct2       = current_oct2;
+  prev_note_num2  = current_note_num2;
+  current_oct1       = current_pitch1 / 12;
+  current_note_num1  = current_pitch1 % 12;
+  current_oct2       = current_pitch2 / 12;
+  current_note_num2  = current_pitch2 % 12;
+  current_pitch1_dec = current_pitch1 << 8;
+  current_pitch2_dec = current_pitch2 << 8;
+  reset_count_in_cycle();
+}
+
+void update_slide() {
+  if (prev_pitch1 != current_pitch1 && active_seq[current_step] && prev_pitch1 < 120 && current_values.v.slide > 0) {
+    slide_speed = (16 - current_values.v.slide);
+    slide_pitch1 = prev_pitch1 << 8;
+    slide_pitch2 = prev_pitch2 << 8;
+    slide_buf_value1 = 0;
+    slide_buf_value2 = 0;
+  } else {
+    slide_speed = 0;
+  }
+}
+
+void update_wave_shape() {
+  // 下位3bitがwave2のidx、上位がwave1のidx
+  selected_wavetable_type1 = current_values.v.wave_select >> 3;
+  selected_wavetable_type2 = (current_values.v.wave_select & 0x07);
+
+  if (changed_value_flags & (1<<CHG_VAL_FLAG_WAVE_PHASE) || changed_value_flags & (1<<CHG_VAL_FLAG_WAVE_PITCH_DURATION)) {
+    reset_phase();
+  }
+
+  if (current_values.v.wave_phase < 16) {
+    wave_phase_shift = current_values.v.wave_phase;
+    wave_phase_shift_cycle = 0;
+  } else {
+    wave_phase_shift = 0;
+    wave_phase_shift_cycle = (current_values.v.wave_phase - 15);
+  }
+
+  wave1_volume = 8 - current_values.v.wave_balance;
+  wave2_volume = current_values.v.wave_balance;
+
+  if (current_values.v.wave_pitch_duration < 16) {
+    pitch_duration_quantized = 0;
+    pitch_duration = current_values.v.wave_pitch_duration;
+  } else {
+    pitch_duration_quantized = 1;
+    pitch_duration = current_values.v.wave_pitch_duration - 15;
   }
 }

@@ -1,4 +1,5 @@
 #include <avr/pgmspace.h>
+#include <string.h>
 #include "eeprom.h"
 #include "pattern.h"
 #include "scale.h"

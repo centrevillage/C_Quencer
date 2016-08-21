@@ -1,5 +1,5 @@
 #include "led.h"
-#include "sequencer.h"
+#include "variables.h"
 #include "timer.h"
 #include "input.h"
 #include <avr/pgmspace.h>
@@ -49,9 +49,17 @@ void output_led_on_seq() {
 }
 
 void output_led_on_value() {
-  if (g_led_i < led_count) {
-    PORTD |= pgm_read_byte(&(led_idx_to_port_and_ddr[g_led_i][0]));
-    DDRD   = pgm_read_byte(&(led_idx_to_port_and_ddr[g_led_i][1]));
+  if (led_count < 17) {
+    if (g_led_i < led_count) {
+      PORTD |= pgm_read_byte(&(led_idx_to_port_and_ddr[g_led_i][0]));
+      DDRD   = pgm_read_byte(&(led_idx_to_port_and_ddr[g_led_i][1]));
+    }
+  } else {
+    // double value (0..31)
+    if (g_led_i >= (led_count - 16)) {
+      PORTD |= pgm_read_byte(&(led_idx_to_port_and_ddr[g_led_i][0]));
+      DDRD   = pgm_read_byte(&(led_idx_to_port_and_ddr[g_led_i][1]));
+    }
   }
 }
 
@@ -152,6 +160,41 @@ void output_led_on_select_preset() {
   }
 }
 
+void output_led_on_wave_select() {
+  // 下位3bitがwave2のidx、上位がwave1のidx
+  uint8_t wave1_idx = current_values.v.wave_select >> 3;
+  uint8_t wave2_idx = (current_values.v.wave_select & 0x07);
+  if (g_led_i < 8) {
+    // wave2 select led
+    uint8_t v = 7 - wave2_idx;
+    if (g_led_i == v) {
+      PORTD |= pgm_read_byte(&(led_idx_to_port_and_ddr[g_led_i][0]));
+      DDRD   = pgm_read_byte(&(led_idx_to_port_and_ddr[g_led_i][1]));
+    }
+  } else if (g_led_i > 8) {
+    // wave1 select led
+    uint8_t v = wave1_idx + 9;
+    if (g_led_i == v) {
+      PORTD |= pgm_read_byte(&(led_idx_to_port_and_ddr[g_led_i][0]));
+      DDRD   = pgm_read_byte(&(led_idx_to_port_and_ddr[g_led_i][1]));
+    }
+  }
+}
+
+void output_led_on_wave_balance() {
+  // 中央(=4)でwave1とwave2のmixバランスが50:50
+  uint8_t v = current_values.v.wave_balance;
+  if (v < 4) {
+    v += 12;
+  } else {
+    v -= 4;
+  }
+  if (g_led_i == v) {
+    PORTD |= pgm_read_byte(&(led_idx_to_port_and_ddr[g_led_i][0]));
+    DDRD   = pgm_read_byte(&(led_idx_to_port_and_ddr[g_led_i][1]));
+  }
+}
+
 // led_task
 // charlieplexing
 // use PD0 - PD5
@@ -162,7 +205,7 @@ void output_led() {
     }
     led_blink_count = 0;
   }
-  long duration;
+  unsigned long duration;
 
   DDRD = 0;
   PORTD &= (uint8_t)~LED_MASK;
@@ -172,7 +215,7 @@ void output_led() {
       break;
     case COUNT:
       duration = ticks() - last_led_disp_tick;
-      if (duration > MAX_DISPLAY_TICK_FOR_VALUE || duration < 0 /* count wrap? */) {
+      if (duration > MAX_DISPLAY_TICK_FOR_VALUE) {
         if (edit_mode == SCALE) {
           display_mode = EDIT_SCALE;
           output_led_on_edit_scale();
@@ -189,7 +232,7 @@ void output_led() {
       break;
     case TRANSPOSE:
       duration = ticks() - last_led_disp_tick;
-      if (duration > MAX_DISPLAY_TICK_FOR_VALUE || duration < 0 /* count wrap? */) {
+      if (duration > MAX_DISPLAY_TICK_FOR_VALUE) {
         display_mode = SEQ;
         output_led_on_seq();
       } else {
@@ -198,7 +241,7 @@ void output_led() {
       break;
     case REC_CLEAR:
       duration = ticks() - last_led_disp_tick;
-      if (duration > MAX_DISPLAY_TICK_FOR_REC_CLEAR || duration < 0 /* count wrap? */) {
+      if (duration > MAX_DISPLAY_TICK_FOR_REC_CLEAR) {
         display_mode = SEQ;
         output_led_on_seq();
       } else {
@@ -208,7 +251,7 @@ void output_led() {
       break;
     case REC_REDO:
       duration = ticks() - last_led_disp_tick;
-      if (duration > MAX_DISPLAY_TICK_FOR_REC_CLEAR || duration < 0 /* count wrap? */) {
+      if (duration > MAX_DISPLAY_TICK_FOR_REC_CLEAR) {
         display_mode = SEQ;
         output_led_on_seq();
       } else {
@@ -227,7 +270,7 @@ void output_led() {
       break;
     case EDIT_PATTERN_SELECT:
       duration = ticks() - last_led_disp_tick;
-      if (duration > MAX_DISPLAY_TICK_FOR_VALUE || duration < 0 /* count wrap? */) {
+      if (duration > MAX_DISPLAY_TICK_FOR_VALUE) {
         display_mode = EDIT_PATTERN;
         output_led_on_edit_pattern();
       } else {
@@ -236,7 +279,7 @@ void output_led() {
       break;
     case EDIT_SCALE_SELECT:
       duration = ticks() - last_led_disp_tick;
-      if (duration > MAX_DISPLAY_TICK_FOR_VALUE || duration < 0 /* count wrap? */) {
+      if (duration > MAX_DISPLAY_TICK_FOR_VALUE) {
         display_mode = EDIT_SCALE;
         output_led_on_edit_scale();
       } else {
@@ -245,7 +288,7 @@ void output_led() {
       break;
     case SELECT_PRESET:
       duration = ticks() - last_led_disp_tick;
-      if (duration > MAX_DISPLAY_TICK_FOR_VALUE || duration < 0 /* count wrap? */) {
+      if (duration > MAX_DISPLAY_TICK_FOR_VALUE) {
         if (edit_mode == SCALE) {
           display_mode = EDIT_SCALE;
           output_led_on_edit_scale();
@@ -255,6 +298,24 @@ void output_led() {
         }
       } else {
         output_led_on_select_preset();
+      }
+      break;
+    case WAVE_SHAPE_SELECT:
+      duration = ticks() - last_led_disp_tick;
+      if (duration > MAX_DISPLAY_TICK_FOR_VALUE) {
+        display_mode = SEQ;
+        output_led_on_seq();
+      } else {
+        output_led_on_wave_select();
+      }
+      break;
+    case WAVE_SHAPE_BALANCE:
+      duration = ticks() - last_led_disp_tick;
+      if (duration > MAX_DISPLAY_TICK_FOR_VALUE) {
+        display_mode = SEQ;
+        output_led_on_seq();
+      } else {
+        output_led_on_wave_balance();
       }
       break;
     default:

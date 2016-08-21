@@ -20,6 +20,10 @@ enum EditMode {NORMAL, SELECT, SCALE, PATTERN};
 #define CHG_VAL_FLAG_SCALE_PAT_RAND 9
 #define CHG_VAL_FLAG_SLIDE 10
 #define CHG_VAL_FLAG_SWING 11
+#define CHG_VAL_FLAG_WAVE_SELECT 12
+#define CHG_VAL_FLAG_WAVE_PHASE 13
+#define CHG_VAL_FLAG_WAVE_BALANCE 14
+#define CHG_VAL_FLAG_WAVE_PITCH_DURATION 15
 
 #define KNOB_VALUES_SIZE 8
 #define RECORDED_VALUES_SIZE 64
@@ -29,7 +33,7 @@ extern volatile enum EditMode edit_mode;
 enum RecMode {STOP, REC, PLAY};
 extern volatile enum RecMode rec_mode;
 
-enum FuncMode {NONE, FUNC, HID};
+enum FuncMode {NONE, FUNC, HID, WAVE_SHAPE};
 extern volatile enum FuncMode func_mode;
 
 typedef struct {
@@ -37,6 +41,7 @@ typedef struct {
   uint8_t start; // on sequence running
   uint8_t func;   // on sub function
   uint8_t hid;   // on hidden function
+  uint8_t wave_shape;   // on wave shape function
 } ControllerState;
 
 enum FuncMode get_func_mode();
@@ -59,6 +64,10 @@ typedef union {
     uint8_t scale_pattern_random;
     uint8_t slide;
     uint8_t swing;
+    uint8_t wave_select;
+    uint8_t wave_phase;
+    uint8_t wave_balance;
+    uint8_t wave_pitch_duration;
   } v;
 } ControllerValue;
 
@@ -87,13 +96,14 @@ extern volatile KnobHistory knob_history;
 volatile ControllerValue recorded_values[RECORDED_VALUES_SIZE];
 volatile uint16_t changed_value_flags; // 0 = not changed, 1 = changed
 
-volatile static uint8_t knob_values[4][KNOB_VALUES_SIZE];
-volatile static uint8_t button_state[4];
+static volatile uint8_t knob_values[4][KNOB_VALUES_SIZE];
+static volatile uint8_t button_state[4];
 
 extern volatile uint8_t edit_preset_num;
 extern volatile uint8_t edit_pos;
 extern volatile uint16_t edit_scale;
 extern volatile uint8_t edit_pattern[16];
+
 
 void read_knob_values();
 void update_knob_values();
@@ -111,6 +121,7 @@ void record_current_knob_values();
 void start_recording();
 void end_recording();
 void clear_recording();
+void next_play_pos();
 void play_recorded_knob_values();
 void reset_all_input();
 
@@ -118,6 +129,5 @@ void enter_edit_select_mode();
 void leave_edit_select_mode();
 void enter_edit_scale_mode();
 void enter_edit_pattern_mode();
-
 
 #endif /* CQ_INPUT_H_ */
