@@ -287,9 +287,16 @@ void update_slide() {
 void update_wave_shape() {
   // 下位3bitがwave2のidx、上位がwave1のidx
   selected_wavetable_type1 = current_values.v.wave_select >> 3;
-  selected_wavetable_type2 = (current_values.v.wave_select & 0x07);
+  uint8_t tmp_wave_type2 = (current_values.v.wave_select & 0x07);
+  if (tmp_wave_type2 == 7) {
+    // 意図的にwavetableのindex越えさせてノイズを発生
+    selected_wavetable_type2 = 4;
+  } else {
+    selected_wavetable_type2 = tmp_wave_type2 & 0x03;
+    selected_wavetable_type2_sign = !(tmp_wave_type2 & 0x04);
+  }
 
-  if (changed_value_flags & (1<<CHG_VAL_FLAG_WAVE_PHASE) || changed_value_flags & (1<<CHG_VAL_FLAG_WAVE_PITCH_DURATION)) {
+  if (is_changed(CHG_VAL_FLAG_WAVE_PHASE) || is_changed(CHG_VAL_FLAG_WAVE_PITCH_DURATION)) {
     reset_phase();
   }
 

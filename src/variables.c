@@ -12,6 +12,7 @@ volatile uint16_t current_pitch1_dec = 0;
 volatile uint16_t current_pitch2_dec = 0;
 volatile uint8_t selected_wavetable_type1 = 0;
 volatile uint8_t selected_wavetable_type2 = 0;
+volatile uint8_t selected_wavetable_type2_sign = 1; // 1: ê≥, 0: ïâ
 volatile uint8_t wave_phase_shift = 0;
 volatile uint8_t wave_phase_shift_cycle = 0;
 volatile uint8_t wave1_volume = 4;

@@ -16,6 +16,7 @@ extern volatile uint16_t current_pitch2_dec;
 extern volatile uint8_t slide_speed;
 extern volatile uint8_t selected_wavetable_type1;
 extern volatile uint8_t selected_wavetable_type2;
+extern volatile uint8_t selected_wavetable_type2_sign;
 extern volatile uint8_t wave_phase_shift;
 extern volatile uint8_t wave_phase_shift_cycle;
 extern volatile uint8_t wave1_volume; // 1 = 12.5%, 8: 100%

@@ -113,7 +113,7 @@ void output_osc_and_cv_on_normal(uint16_t interval_count, uint8_t delta_tick){
   current_table_index2 = (((uint32_t)wave2_count_in_cycle * WAVETABLE_SIZE / cycle_length2) + phase_shift2) % WAVETABLE_SIZE;
 
   uint16_t wave1_value = pgm_read_word(&(wavetables[selected_wavetable_type1][current_table_index1]));
-  uint16_t wave2_value = pgm_read_word(&(wavetables[selected_wavetable_type2 & 0x03][(selected_wavetable_type2 & 0x04) ? (WAVETABLE_SIZE - 1 - current_table_index2) : current_table_index2]));
+  uint16_t wave2_value = pgm_read_word(&(wavetables[selected_wavetable_type2][selected_wavetable_type2_sign ? current_table_index2 : (WAVETABLE_SIZE - 1 - current_table_index2)]));
 
   uint16_t current_value = wave1_value * wave1_volume + wave2_value * wave2_volume;
   output_dac_a(current_value >> 3);

@@ -130,4 +130,6 @@ void leave_edit_select_mode();
 void enter_edit_scale_mode();
 void enter_edit_pattern_mode();
 
+uint8_t is_changed(uint8_t idx);
+
 #endif /* CQ_INPUT_H_ */

@@ -772,3 +772,7 @@ void reset_all_input() {
   memset(&edit_pattern, 0, 16);
 }
 
+uint8_t is_changed(uint8_t idx) {
+  return (changed_value_flags & (1<<idx)) || recorded_values[record_pos].values[idx] != 0xFF;
+}
+
