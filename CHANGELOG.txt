@@ -1,3 +1,11 @@
+Ver 0.8:
+* add wave shaping mode (press "TAP" and then press "START")
+on wave shaping mode:
+	FILL  knob: WAVE SHAPE
+	ROT   knob: PHASE MODULATION
+	SCALE knob: WAVE BALANCE
+	PAT   knob: WAVE PITCH DURATION
+
 Ver 0.7:
 * add quantized recording function (long press "REC" (above 8 step time))
 
