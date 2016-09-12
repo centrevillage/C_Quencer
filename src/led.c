@@ -119,10 +119,7 @@ void output_led_on_edit_scale(){
 
 void output_led_on_edit_pattern(){
   if (g_led_i == edit_pos) {
-    ++led_blink_count;
-    if (led_blink_count >= 64) {
-      led_blink_count = 0;
-    }
+    led_blink_count = (led_blink_count + 1) % 64;
     if (led_blink_count >= 32) {
       PORTD |= pgm_read_byte(&(led_idx_to_port_and_ddr[g_led_i][0]));
       DDRD   = pgm_read_byte(&(led_idx_to_port_and_ddr[g_led_i][1]));
@@ -322,9 +319,7 @@ void output_led() {
       break;
   }
 
-  if (++g_led_i >= 16) {
-    g_led_i = 0;
-  }
+  g_led_i = (g_led_i + 1) % 16;
 }
 
 void set_display_mode(enum DisplayMode mode) {
