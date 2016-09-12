@@ -4,6 +4,12 @@
 #define CQ_ADC_H_
 
 void adc_init();
-uint8_t adc_read(uint8_t pin);
+
+inline uint8_t adc_read(uint8_t pin) {
+  ADMUX = (ADMUX & 0xF0) | pin;
+  ADCSRA |= (1<<ADSC);
+  loop_until_bit_is_clear(ADCSRA, ADSC);
+  return ADCH;
+}
 
 #endif /* CQ_ADC_H_ */

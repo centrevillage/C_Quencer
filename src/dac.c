@@ -20,37 +20,18 @@ inline uint8_t trans_spi(uint8_t data) {
   return(data);
 }
 
-void output_dac_a(uint16_t data) {
+inline void output_dac_a(uint16_t data) {
   PORTB = (PORTB & ~LDAC_SS_MASK) | LDAC_MASK;
   trans_spi(((data >> 8) & 0x0F) | _BV(4) | _BV(5)); // OUT A, gain x1, no shutdown
   trans_spi(data & 0xFF);
   PORTB = (PORTB & ~LDAC_SS_MASK) | SS_MASK;
 }
 
-void output_dac_b(uint16_t data) {
+inline void output_dac_b(uint16_t data) {
   PORTB = (PORTB & ~LDAC_SS_MASK) | LDAC_MASK;
   trans_spi(((data >> 8) & 0x0F) | _BV(7) | _BV(4) | _BV(5)); // OUT B, gain x1, no shutdown
   trans_spi(data & 0xFF);
   PORTB = (PORTB & ~LDAC_SS_MASK) | SS_MASK;
-}
-
-//C0- B9 = 0 - 119
-//A5(69) = 440
-//1 timer count = 62.5kHz = 1/ 62500 s = 16 us / 1 cycle
-// ldac_pin = PB1
-// ss_pin = PB0
-void output_osc_and_cv(uint16_t interval_count, uint8_t delta_tick) {
-  switch(edit_mode) {
-    case NORMAL:
-      output_osc_and_cv_on_normal(interval_count, delta_tick);
-      break;
-    case SCALE:
-    case PATTERN:
-      output_osc_and_cv_on_edit(interval_count, delta_tick);
-      break;
-    default:
-      break;
-  }
 }
 
 
@@ -62,7 +43,8 @@ volatile uint16_t wave1_count_in_cycle = 0;
 volatile uint16_t wave2_count_in_cycle = 0;
 volatile uint16_t current_table_index1 = 0;
 volatile uint16_t current_table_index2 = 0;
-void output_osc_and_cv_on_normal(uint16_t interval_count, uint8_t delta_tick){
+const uint8_t shift_oct = 0;
+inline void output_osc_and_cv_on_normal(uint8_t interval_count, uint8_t delta_tick){
   cli();
   uint16_t cv_pitch = current_pitch1_dec;
 
@@ -79,16 +61,15 @@ void output_osc_and_cv_on_normal(uint16_t interval_count, uint8_t delta_tick){
     uint16_t slide_note2 = slide_pitch2 % (12*256);
     uint32_t val1 = pgm_read_word(&(cycle_speed_table[slide_note1]));
     uint32_t val2 = pgm_read_word(&(cycle_speed_table[slide_note2]));
-    slide_buf_value1 += (val1 * interval_count) << slide_oct1;
-    slide_buf_value2 += (val2 * interval_count) << slide_oct2;
-    uint16_t slide_buf_value2_count = slide_buf_value2 >> 12;
-    wave1_count_in_cycle = (wave1_count_in_cycle + (slide_buf_value1 >> 12)) % 7645;
-    wave2_count_in_cycle = (wave2_count_in_cycle + (slide_buf_value2 >> 12)) % 7645;
+    slide_buf_value1 += (val1 * interval_count) << (slide_oct1 + shift_oct);
+    slide_buf_value2 += (val2 * interval_count) << (slide_oct2 + shift_oct);
+    wave1_count_in_cycle = (wave1_count_in_cycle + (slide_buf_value1 >> 12)) % 61156;
+    wave2_count_in_cycle = (wave2_count_in_cycle + (slide_buf_value2 >> 12)) % 61156;
     slide_buf_value1 &= 0x00000FFF;
     slide_buf_value2 &= 0x00000FFF;
   } else {
-    wave1_count_in_cycle = (wave1_count_in_cycle + (interval_count << current_oct1)) % cycle_length1;
-    wave2_count_in_cycle = (wave2_count_in_cycle + (interval_count << current_oct2)) % cycle_length2;
+    wave1_count_in_cycle = (wave1_count_in_cycle + ((uint16_t)interval_count << (current_oct1 + shift_oct))) % cycle_length1;
+    wave2_count_in_cycle = (wave2_count_in_cycle + ((uint16_t)interval_count << (current_oct2 + shift_oct))) % cycle_length2;
   }
 
   current_table_index1 = (uint32_t)wave1_count_in_cycle * WAVETABLE_SIZE / cycle_length1;
@@ -122,18 +103,39 @@ void output_osc_and_cv_on_normal(uint16_t interval_count, uint8_t delta_tick){
   // 128 pitch unit = 4096 dac value = 5 V pin out
   // 120 pitch unit = 5 * 120 / 128  = 4.68 V pin out
   // 4.68 V pin out -> analog gain x 2.17 -> 10V cv out
-  output_dac_b(cv_pitch >> 3);
+  output_dac_b((cv_pitch >> 3) + (3 << 5)); // +3 -> change 1V = 'C' to 'A'
   sei();
 }
 
-void output_osc_and_cv_on_edit(uint16_t interval_count, uint8_t delta_tick){
+inline void output_osc_and_cv_on_edit(uint8_t interval_count, uint8_t delta_tick){
   uint16_t cycle_length1 = pgm_read_word(&(pitch_to_cycle[current_note_num1]));
-  wave1_count_in_cycle = (wave1_count_in_cycle + (interval_count << current_oct1)) % cycle_length1;
+  wave1_count_in_cycle = (wave1_count_in_cycle + ((uint16_t)interval_count << current_oct1)) % cycle_length1;
   current_table_index1 = (uint32_t)wave1_count_in_cycle * WAVETABLE_SIZE / cycle_length1;
   uint16_t current_value = pgm_read_word(&(wavetables[selected_wavetable_type1][current_table_index1]));
 
   output_dac_a(current_value);
-  output_dac_b(current_pitch1*32);
+  output_dac_b((current_pitch1 + 3)*32); // +3 -> change 1V = 'C' to 'A'
+}
+
+//C0- B9 = 0 - 119
+//A5(69) = 440
+//1 timer count = 62.5kHz = 1/ 62500 s = 16 us / 1 cycle
+// ldac_pin = PB1
+// ss_pin = PB0
+void output_osc_and_cv(uint8_t interval_count, uint8_t delta_tick) {
+  switch(edit_mode) {
+    case NORMAL:
+      if (TCCR1B & _BV(CS12)) {
+        output_osc_and_cv_on_normal(interval_count, delta_tick);
+      }
+      break;
+    case SCALE:
+    case PATTERN:
+      output_osc_and_cv_on_edit(interval_count, delta_tick);
+      break;
+    default:
+      break;
+  }
 }
 
 void reset_count_in_cycle() {

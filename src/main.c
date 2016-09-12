@@ -46,27 +46,45 @@ void setup() {
   update_knob_values();
 }
 
-static uint8_t prev_short_tick = 0xFF;
-static uint16_t prev_timer_count = 0xFFFF;
-void loop() {
-  cli();
-  uint16_t current_timer_count = TCNT1;
-  sei();
-  uint8_t short_tick = TCNT2;
-  output_led();
+inline void update_knob_values_on_stop() {
+  switch(edit_mode) {
+    case NORMAL:
+      if (!current_state.start && current_wrap_count % 64 == 0) {
+        update_knob_values();
+      }
+      break;
+    case SELECT:
+      if (current_wrap_count % 64 == 0) {
+        update_knob_values();
+      }
+      break;
+    case SCALE:
+    case PATTERN:
+      break;
+    default:
+      break;
+  }
+}
 
-  if (prev_timer_count != current_timer_count) {
-    uint16_t interval_count;
-    if (prev_timer_count > current_timer_count) {
-      interval_count = (prev_step_interval - prev_timer_count) + current_timer_count;
-    } else {
-      interval_count = current_timer_count - prev_timer_count;
+uint8_t prev_count = 0;
+uint8_t div16_count_buf = 0;
+inline void loop() {
+  uint8_t current_count = TCNT2;
+  uint8_t interval_count = current_count - prev_count;
+  if (interval_count > 0 ) {
+
+    if (interval_count > 0) {
+      div16_count_buf += interval_count;
+      uint8_t div16_interval = interval_count / 8;
+      div16_count_buf -= div16_interval * 8;
+
+      output_osc_and_cv(interval_count, div16_interval);
     }
 
-    output_osc_and_cv(interval_count, short_tick - prev_short_tick);
-    prev_timer_count = current_timer_count;
-    prev_short_tick = short_tick;
+    prev_count = current_count;
   }
+  output_led();
+  update_knob_values_on_stop();
 }
 
 // from Arduino ==

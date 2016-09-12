@@ -6,11 +6,11 @@
 
 static volatile enum DisplayMode display_mode = SEQ;
 static volatile uint8_t led_count = 0;
-static volatile unsigned long last_led_disp_tick = 0;
+static volatile uint16_t last_led_disp_tick = 0;
 static uint8_t rec_led_count = 0;
 static uint8_t led_blink_count = 0;
 
-static int g_led_i = 0;
+static uint8_t g_led_i = 0;
 
 static const uint8_t led_idx_to_port_and_ddr[16][2] PROGMEM = {
   {0b00000010, 0b00000011},
@@ -119,10 +119,7 @@ void output_led_on_edit_scale(){
 
 void output_led_on_edit_pattern(){
   if (g_led_i == edit_pos) {
-    ++led_blink_count;
-    if (led_blink_count >= 64) {
-      led_blink_count = 0;
-    }
+    led_blink_count = (led_blink_count + 1) % 64;
     if (led_blink_count >= 32) {
       PORTD |= pgm_read_byte(&(led_idx_to_port_and_ddr[g_led_i][0]));
       DDRD   = pgm_read_byte(&(led_idx_to_port_and_ddr[g_led_i][1]));
@@ -200,12 +197,12 @@ void output_led_on_wave_balance() {
 // use PD0 - PD5
 void output_led() {
   if (rec_mode == REC) {
-    if (led_blink_count++ < 64) {
+    if (led_blink_count++ < 16) {
       return;
     }
     led_blink_count = 0;
   }
-  unsigned long duration;
+  uint16_t duration;
 
   DDRD = 0;
   PORTD &= (uint8_t)~LED_MASK;
@@ -245,7 +242,7 @@ void output_led() {
         display_mode = SEQ;
         output_led_on_seq();
       } else {
-        rec_led_count = 15 - (duration/4096);
+        rec_led_count = 15 - (duration/32);
         output_led_on_rec_clear();
       }
       break;
@@ -255,7 +252,7 @@ void output_led() {
         display_mode = SEQ;
         output_led_on_seq();
       } else {
-        rec_led_count = (duration/4096);
+        rec_led_count = (duration/32);
         output_led_on_rec_clear();
       }
       break;
@@ -322,9 +319,7 @@ void output_led() {
       break;
   }
 
-  if (++g_led_i >= 16) {
-    g_led_i = 0;
-  }
+  g_led_i = (g_led_i + 1) % 16;
 }
 
 void set_display_mode(enum DisplayMode mode) {

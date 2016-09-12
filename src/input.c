@@ -1,7 +1,6 @@
 #include "input.h"
 #include "variables.h"
 #include "sequencer.h"
-#include "adc.h"
 #include "timer.h"
 #include "led.h"
 #include "eeprom.h"
@@ -21,8 +20,9 @@ volatile uint8_t edit_pos;
 volatile uint16_t edit_scale;
 volatile uint8_t edit_pattern[16];
 
-static volatile uint8_t current_knob_idx = 0;
-static volatile uint8_t current_knob_value_idx = 0;
+volatile uint8_t knob_values[4][KNOB_VALUES_SIZE];
+volatile uint8_t current_knob_idx = 0;
+volatile uint8_t current_knob_value_idx = 0;
 
 static volatile uint8_t record_start = 0;
 static volatile uint8_t record_end = 0;
@@ -30,47 +30,70 @@ static volatile uint8_t record_length = 0;
 static volatile uint8_t record_pos = 0;
 static volatile uint8_t play_pos = 0;
 
-// input task
-void read_knob_values() {
-  knob_values[current_knob_idx][current_knob_value_idx] = 255 - adc_read(current_knob_idx);
-  ++current_knob_idx;
-  if (current_knob_idx > 3) {
-    current_knob_idx = 0;
-    ++current_knob_value_idx;
-    if (current_knob_value_idx >= KNOB_VALUES_SIZE) {
-      current_knob_value_idx = 0;
-    }
-  }
-}
+volatile uint16_t prev_values[] = {0, 0, 0, 0};
 
-static volatile uint16_t prev_values[] = {0, 0, 0, 0};
-void update_knob_values() {
+volatile uint32_t tap_tempo_hp_tick = 0;
+volatile uint8_t in_tap_tempo = 0;
+volatile uint32_t tap_tempo_interval;
+
+inline void update_knob_value_inline(uint8_t i) {
   uint16_t prev_value;
   uint16_t new_value_sum;
   uint16_t new_value;
-  for (uint8_t i = 0; i < 4; ++i) {
-    prev_value = prev_values[i];
-    new_value_sum = 0;
-    for (uint8_t j = 0; j < KNOB_VALUES_SIZE; ++j) {
-      new_value_sum += knob_values[i][j];
-    }
-    int diff = new_value_sum - prev_value * KNOB_VALUES_SIZE;
-    if (diff >= KNOB_VALUES_SIZE) {
-      new_value = prev_value + diff / KNOB_VALUES_SIZE;
-    } else if (diff <= -KNOB_VALUES_SIZE) {
-      new_value = prev_value - ((-diff) / KNOB_VALUES_SIZE);
-    } else {
-      new_value = prev_value;
-    }
-    if (new_value != prev_value) {
-      set_current_value((uint8_t)new_value, i);
-      prev_values[i] = new_value;
+
+  prev_value = prev_values[i];
+
+  //new_value_sum = 0;
+  //for (uint8_t j = 0; j < KNOB_VALUES_SIZE; ++j) {
+  //  new_value_sum += knob_values[i][j];
+  //}
+  new_value_sum =  knob_values[i][0];
+  new_value_sum += knob_values[i][1];
+  new_value_sum += knob_values[i][2];
+  new_value_sum += knob_values[i][3];
+  new_value_sum += knob_values[i][4];
+  new_value_sum += knob_values[i][5];
+  new_value_sum += knob_values[i][6];
+  new_value_sum += knob_values[i][7];
+
+  int diff = new_value_sum - prev_value * KNOB_VALUES_SIZE;
+  if (diff >= KNOB_VALUES_SIZE) {
+    new_value = prev_value + diff / KNOB_VALUES_SIZE;
+    set_current_value((uint8_t)new_value, i);
+    prev_values[i] = new_value;
+  } else if (diff <= -KNOB_VALUES_SIZE) {
+    new_value = prev_value - ((-diff) / KNOB_VALUES_SIZE);
+    set_current_value((uint8_t)new_value, i);
+    prev_values[i] = new_value;
+  }
+}
+
+inline void check_timeout() {
+  if (ticks() - button_history.last_tick > MULTI_TAP_TIMEOUT_INTERVAL) {
+    reset_button_history(button_history.button_idx);
+  }
+
+  if (in_tap_tempo) {
+    if (hp_ticks() - tap_tempo_hp_tick > TAP_TEMPO_TIMEOUT) {
+      in_tap_tempo = 0;
     }
   }
 }
 
+inline void clear_recording() {
+  memset(&recorded_values, 0xFF, sizeof(ControllerValue) * RECORDED_VALUES_SIZE);
+}
+
+void update_knob_values() {
+  cli(); check_timeout(); sei();
+  cli(); update_knob_value_inline(0); sei();
+  cli(); update_knob_value_inline(1); sei();
+  cli(); update_knob_value_inline(2); sei();
+  cli(); update_knob_value_inline(3); sei();
+}
+
 void reset_knob_history(uint8_t knob_idx) {
-  unsigned long t = ticks();
+  uint16_t t = ticks();
   knob_history.knob_idx = knob_idx;
   knob_history.count = 1;
   knob_history.last_tick = t;
@@ -79,7 +102,7 @@ void reset_knob_history(uint8_t knob_idx) {
 
 void update_knob_history(uint8_t knob_idx) {
   if (knob_history.knob_idx == knob_idx) {
-    unsigned long t = ticks();
+    uint16_t t = ticks();
     knob_history.knob_idx = knob_idx;
     knob_history.count += 1;
     knob_history.interval_tick = t - knob_history.last_tick;
@@ -91,10 +114,6 @@ void update_knob_history(uint8_t knob_idx) {
 
 uint8_t is_multi_tap(uint8_t button_idx, uint8_t count) {
   return button_history.button_idx == button_idx && button_history.count >= count;
-}
-
-uint8_t is_long_press(uint8_t button_idx, unsigned long interval_tick) {
-  return button_history.button_idx == button_idx && (button_history.last_leave - button_history.last_tick) > interval_tick;
 }
 
 uint8_t is_knob_multi(uint8_t knob_idx, uint8_t count) {
@@ -127,19 +146,16 @@ void set_current_value(uint8_t value, uint8_t knob_idx) {
 
 void set_current_value_on_normal(uint8_t value, uint8_t knob_idx){
   uint8_t tmp_value;
-  uint8_t is_change_seq = 0;
   switch (knob_idx) {
     case 0: // fill / len / slide / wave select
       switch (func_mode) {
         case NONE:
           current_values.v.step_fill = value >> 4;
           changed_value_flags |= 1<<CHG_VAL_FLAG_STEP_FILL;
-          is_change_seq = 1;
           break;
         case FUNC:
           current_values.v.step_length = (value >> 4) + 1;
           changed_value_flags |= 1<<CHG_VAL_FLAG_STEP_LENGTH;
-          is_change_seq = 1;
           break;
         case HID:
           current_values.v.slide = value >> 4;
@@ -158,7 +174,6 @@ void set_current_value_on_normal(uint8_t value, uint8_t knob_idx){
         case NONE:
           current_values.v.step_rot = value >> 3;
           changed_value_flags |= 1<<CHG_VAL_FLAG_STEP_ROT;
-          is_change_seq = 1;
           break;
         case FUNC:
           current_values.v.step_rand = value >> 3;
@@ -235,7 +250,7 @@ void set_current_value_on_normal(uint8_t value, uint8_t knob_idx){
     default:
       break;
   }
-  if (is_change_seq) {
+  if (changed_value_flags & (_BV(CHG_VAL_FLAG_STEP_FILL) | _BV(CHG_VAL_FLAG_STEP_LENGTH) | _BV(CHG_VAL_FLAG_STEP_ROT))) {
     set_display_mode(SEQ);
     update_seq_pattern();
   }
@@ -313,7 +328,7 @@ void set_current_value_on_pattern(uint8_t value, uint8_t knob_idx){
       break;
     case 1:
       edit_pattern[edit_pos] = value / 16;
-      set_led_count(edit_pattern[edit_pos]);
+      set_led_count(edit_pattern[edit_pos] + 1);
       set_display_mode(COUNT);
       break;
     case 3: // fill (= preset select)
@@ -338,7 +353,7 @@ enum FuncMode get_func_mode() {
 }
 
 void reset_button_history(uint8_t button_idx) {
-    unsigned long t = ticks();
+    uint16_t t = ticks();
     enum FuncMode mode = get_func_mode();
     button_history.mode = mode;
     button_history.button_idx = button_idx;
@@ -350,7 +365,7 @@ void reset_button_history(uint8_t button_idx) {
 void update_button_history(uint8_t button_idx) {
   enum FuncMode mode = get_func_mode();
   if (button_history.mode == mode && button_history.button_idx == button_idx) {
-    unsigned long t = ticks();
+    uint16_t t = ticks();
     button_history.button_idx = button_idx;
     button_history.count += 1;
     button_history.interval_tick = t - button_history.last_tick;
@@ -363,7 +378,7 @@ void update_button_history(uint8_t button_idx) {
 void update_button_history_on_leave(uint8_t button_idx) {
   enum FuncMode mode = get_func_mode();
   if (button_history.mode == mode && button_history.button_idx == button_idx) {
-    unsigned long t = ticks();
+    uint16_t t = ticks();
     button_history.last_leave = t;
   } else {
     button_history.last_leave = 0;
@@ -376,11 +391,11 @@ void press(uint8_t button_idx) {
   update_button_history(button_idx);
 
   if (is_multi_tap(button_idx, 2)) {
-    if (button_history.interval_tick < 200) {
+    if (button_history.interval_tick < FLUTTERING_INTERVAL) {
       // avoid fluttering
       button_history = prev_button_history;
       return;
-    } else if (button_history.interval_tick > 262143L) {
+    } else if (button_history.interval_tick > MULTI_TAP_TIMEOUT_INTERVAL) {
       // timeout multitap
       reset_button_history(button_idx);
     }
@@ -405,11 +420,13 @@ void press(uint8_t button_idx) {
 }
 
 void press_on_normal(uint8_t button_idx) {
+  uint32_t hp_tick;
   switch(button_idx) {
     case 0:
       current_state.func = 1;
-      if (is_multi_tap(button_idx, 5) && button_history.interval_tick < 65535) {
+      if (is_multi_tap(button_idx, 5)) {
         enter_edit_select_mode();
+        reset_button_history(button_idx);
       }
       break;
     case 1:
@@ -433,7 +450,7 @@ void press_on_normal(uint8_t button_idx) {
       break;
     case 2:
       if (func_mode == FUNC) {
-        if (is_multi_tap(button_idx, 2) && button_history.interval_tick < 65535) {
+        if (is_multi_tap(button_idx, 2)) {
           set_divide(button_history.count);
         } else {
           set_divide(1);
@@ -441,8 +458,17 @@ void press_on_normal(uint8_t button_idx) {
         }
       } else {
         current_state.hid = 1;
-        if (is_multi_tap(button_idx, 2) && ((button_history.last_leave < button_history.last_tick) || (button_history.last_leave - button_history.last_tick) > 4096)) {
-          set_step_interval(button_history.interval_tick/8);
+        hp_tick = hp_ticks();
+        if (in_tap_tempo == 2) {
+          tap_tempo_interval = hp_tick - tap_tempo_hp_tick;
+          if (tap_tempo_interval > TAP_TEMPO_TIMEOUT) {
+            in_tap_tempo = 0;
+          } else {
+            tap_tempo_hp_tick = hp_tick;
+          }
+        } else {
+          in_tap_tempo = 1;
+          tap_tempo_hp_tick = hp_tick;
         }
       }
       break;
@@ -481,14 +507,18 @@ void press_on_normal(uint8_t button_idx) {
     default:
       break;
   }
+  if (button_idx != 2) {
+    in_tap_tempo = 0;
+  }
   func_mode = get_func_mode();
 }
 
 void press_on_select(uint8_t button_idx){
   switch(button_idx) {
     case 0:
-      if (is_multi_tap(button_idx, 2) && button_history.interval_tick < 65535) {
+      if (is_multi_tap(button_idx, 2)) {
         leave_edit_select_mode();
+        reset_button_history(button_idx);
       }
       break;
     default:
@@ -498,8 +528,9 @@ void press_on_select(uint8_t button_idx){
 void press_on_scale(uint8_t button_idx){
   switch(button_idx) {
     case 0:
-      if (is_multi_tap(button_idx, 2) && button_history.interval_tick < 65535) {
+      if (is_multi_tap(button_idx, 2)) {
         leave_edit_select_mode();
+        reset_button_history(button_idx);
       }
       break;
     case 1:
@@ -523,8 +554,9 @@ void press_on_scale(uint8_t button_idx){
 void press_on_pattern(uint8_t button_idx){
   switch(button_idx) {
     case 0:
-      if (is_multi_tap(button_idx, 2) && button_history.interval_tick < 65535) {
+      if (is_multi_tap(button_idx, 2)) {
         leave_edit_select_mode();
+        reset_button_history(button_idx);
       }
       break;
     case 1:
@@ -588,10 +620,7 @@ void leave_on_rec_mode() {
     }
     play_pos = rec_len_diff;
   } else if (record_length < quantized_len) {
-    changed_value_flags = 0;
-    while (record_length < quantized_len) {
-      record_current_knob_values();
-    }
+    fill_remains_records(quantized_len);
     play_pos = record_length + rec_len_diff;
   } else {
     play_pos = 0;
@@ -611,6 +640,16 @@ void leave(uint8_t button_idx) {
       break;
     case 2:
       current_state.hid = 0;
+      if (in_tap_tempo) {
+        if (hp_ticks() - tap_tempo_hp_tick > TAP_FUNC_DURAITON) { // TAPƒ{ƒ^ƒ“0.8•bˆÈã’·‰Ÿ‚µ
+          in_tap_tempo = 0;
+        } else {
+          if (in_tap_tempo == 2) {
+            set_step_interval(tap_tempo_interval/16);
+          }
+          in_tap_tempo = 2;
+        }
+      }
       break;
     case 3:
       if (rec_mode == REC && record_length > 7) {
@@ -629,8 +668,8 @@ void leave(uint8_t button_idx) {
 // START BUTTON = PD6, PCINT22
 // TAP BUTTON = PD7, PCINT23
 ISR(PCINT2_vect) {
-  for (int i = 0; i < 3; ++i) {
-    int pin = i + 5;
+  for (uint8_t i = 0; i < 3; ++i) {
+    uint8_t pin = i + 5;
     if (bit_is_clear(PIND, pin)) {
       if (!button_state[i]) {
         press(i);
@@ -693,9 +732,18 @@ void record_current_knob_values() {
     record_length++;
   }
 
-  ++record_pos;
-  if (record_pos >= RECORDED_VALUES_SIZE) {
-    record_pos = 0;
+  record_pos = (record_pos + 1) % RECORDED_VALUES_SIZE;
+}
+
+void fill_remains_records(uint8_t quantized_len) {
+  while (record_length < quantized_len) {
+    for (uint8_t i = 0; i < sizeof(ControllerValue); ++i) {
+      recorded_values[record_pos].values[i] = 0xFF; // no record
+    }
+    if (record_length < RECORDED_VALUES_SIZE) {
+      record_length++;
+    }
+    record_pos = (record_pos + 1) % RECORDED_VALUES_SIZE;
   }
 }
 
@@ -716,22 +764,17 @@ void play_recorded_knob_values() {
   if (record_length == 0) {
     return;
   }
-  uint8_t is_change_seq = 0;
+  uint8_t changed_seq_flags = changed_value_flags & (_BV(CHG_VAL_FLAG_STEP_FILL) | _BV(CHG_VAL_FLAG_STEP_LENGTH) | _BV(CHG_VAL_FLAG_STEP_ROT));
   for (uint8_t i = 0; i < sizeof(ControllerValue); ++i) {
     if (!(changed_value_flags & (1<<i)) && recorded_values[record_pos].values[i] != 0xFF) {
       current_values.values[i] = recorded_values[record_pos].values[i];
-      if (i < 3) { // step_fill, step_length, step_rot
-        is_change_seq = 1;
-      }
+      changed_value_flags |= (1<<i);
     }
   }
-  if (is_change_seq) {
+  uint8_t changed_seq_flags_after_play = changed_value_flags & (_BV(CHG_VAL_FLAG_STEP_FILL) | _BV(CHG_VAL_FLAG_STEP_LENGTH) | _BV(CHG_VAL_FLAG_STEP_ROT));
+  if (changed_seq_flags != changed_seq_flags_after_play) {
     update_seq_pattern();
   }
-}
-
-void clear_recording() {
-  memset(&recorded_values, 0xFF, sizeof(ControllerValue) * RECORDED_VALUES_SIZE);
 }
 
 void reset_all_input() {
@@ -764,15 +807,12 @@ void reset_all_input() {
   memset(knob_values, 0, 4*KNOB_VALUES_SIZE);
   memset(button_state, 0, 4);
   changed_value_flags = 0;
-  memset(&recorded_values, 0, sizeof(ControllerValue) * RECORDED_VALUES_SIZE);
+
+  clear_recording();
 
   edit_preset_num = 0;
   edit_pos = 0;
   edit_scale = 1;
   memset(&edit_pattern, 0, 16);
-}
-
-uint8_t is_changed(uint8_t idx) {
-  return (changed_value_flags & (1<<idx)) || recorded_values[record_pos].values[idx] != 0xFF;
 }
 

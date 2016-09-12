@@ -2,6 +2,7 @@
 #include <avr/Interrupt.h>
 #include <stdlib.h>
 #include <string.h>
+#include "adc.h"
 
 #ifndef CQ_INPUT_H_
 #define CQ_INPUT_H_
@@ -27,6 +28,14 @@ enum EditMode {NORMAL, SELECT, SCALE, PATTERN};
 
 #define KNOB_VALUES_SIZE 8
 #define RECORDED_VALUES_SIZE 64
+
+#define MULTI_TAP_TIMEOUT_INTERVAL 4000
+#define FLUTTERING_INTERVAL 3
+#define TAP_TEMPO_MIN_INTERVAL 8
+
+#define TAP_TEMPO_TIMEOUT 262143L
+
+#define TAP_FUNC_DURAITON 51200
 
 extern volatile enum EditMode edit_mode;
 
@@ -77,16 +86,16 @@ typedef struct {
   enum FuncMode mode; 
   uint8_t button_idx;
   uint8_t count;
-  unsigned long last_tick;
-  unsigned long interval_tick;
-  unsigned long last_leave;
+  uint16_t last_tick;
+  uint16_t interval_tick;
+  uint16_t last_leave;
 } ButtonHistory;
 
 typedef struct {
   uint8_t knob_idx;
   uint8_t count;
-  unsigned long last_tick;
-  unsigned long interval_tick;
+  uint16_t last_tick;
+  uint16_t interval_tick;
 } KnobHistory;
 
 extern volatile ControllerState current_state;
@@ -96,7 +105,6 @@ extern volatile KnobHistory knob_history;
 volatile ControllerValue recorded_values[RECORDED_VALUES_SIZE];
 volatile uint16_t changed_value_flags; // 0 = not changed, 1 = changed
 
-static volatile uint8_t knob_values[4][KNOB_VALUES_SIZE];
 static volatile uint8_t button_state[4];
 
 extern volatile uint8_t edit_preset_num;
@@ -104,8 +112,19 @@ extern volatile uint8_t edit_pos;
 extern volatile uint16_t edit_scale;
 extern volatile uint8_t edit_pattern[16];
 
+extern volatile uint8_t knob_values[4][KNOB_VALUES_SIZE];
+extern volatile uint8_t current_knob_idx;
+extern volatile uint8_t current_knob_value_idx;
 
-void read_knob_values();
+inline void read_knob_values() {
+  knob_values[current_knob_idx][current_knob_value_idx] = 255 - adc_read(current_knob_idx);
+  ++current_knob_idx;
+  if (current_knob_idx > 3) {
+    current_knob_idx = 0;
+    current_knob_value_idx = (current_knob_value_idx + 1) % KNOB_VALUES_SIZE;
+  }
+}
+
 void update_knob_values();
 void set_current_value(uint8_t value, uint8_t knob_idx);
 void set_current_value_on_normal(uint8_t value, uint8_t knob_idx);
@@ -118,18 +137,17 @@ void press_on_select(uint8_t button_idx);
 void press_on_scale(uint8_t button_idx);
 void press_on_pattern(uint8_t button_idx);
 void record_current_knob_values();
+void fill_remains_records(uint8_t quantized_len);
 void start_recording();
 void end_recording();
-void clear_recording();
 void next_play_pos();
 void play_recorded_knob_values();
 void reset_all_input();
+void reset_button_history(uint8_t button_idx);
 
 void enter_edit_select_mode();
 void leave_edit_select_mode();
 void enter_edit_scale_mode();
 void enter_edit_pattern_mode();
-
-uint8_t is_changed(uint8_t idx);
 
 #endif /* CQ_INPUT_H_ */

@@ -38,7 +38,7 @@ void write_pattern_preset(uint8_t preset_num, uint8_t values[16]){
   addr+=2;
 
   addr+=(preset_num * 16);
-  for (int i=0; i<16; ++i) {
+  for (uint8_t i=0; i<16; ++i) {
     preset_info.pattern_preset.patterns[preset_num][i] = values[i];
     eeprom_busy_wait();
     eeprom_write_byte((uint8_t*)addr, preset_info.pattern_preset.patterns[preset_num][i]);
@@ -47,7 +47,7 @@ void write_pattern_preset(uint8_t preset_num, uint8_t values[16]){
 }
 void reset_pattern_preset(uint8_t preset_num){
   preset_info.pattern_preset.record_flag &= ~(1<<preset_num);
-  for (int j=0; j<16; ++j) {
+  for (uint8_t j=0; j<16; ++j) {
     preset_info.pattern_preset.patterns[preset_num][j] = pgm_read_byte(&(scale_patterns[preset_num][j]));
   }
   eeprom_busy_wait();
@@ -85,7 +85,7 @@ void load_preset(){
   preset_info.scale_preset.record_flag = eeprom_read_word((uint16_t *)addr);
   addr += 2;
 
-  for (int i=0; i<16; ++i) {
+  for (uint8_t i=0; i<16; ++i) {
     eeprom_busy_wait();
     preset_info.scale_preset.scales[i] = eeprom_read_word((uint16_t *)addr);
     addr += 2;
@@ -95,20 +95,20 @@ void load_preset(){
   preset_info.pattern_preset.record_flag = eeprom_read_word((uint16_t *)addr);
   addr += 2;
 
-  for (int i=0; i<16; ++i) {
-    for (int j=0; j<16; ++j) {
+  for (uint8_t i=0; i<16; ++i) {
+    for (uint8_t j=0; j<16; ++j) {
       eeprom_busy_wait();
       preset_info.pattern_preset.patterns[i][j] = eeprom_read_byte((uint8_t *)addr);
       ++addr;
     }
   }
 
-  for (int i=0; i<16; ++i) {
+  for (uint8_t i=0; i<16; ++i) {
     if (!(preset_info.scale_preset.record_flag & (1<<i))) {
       preset_info.scale_preset.scales[i] = pgm_read_word(&(scale_defs[i]));
     }
     if (!(preset_info.pattern_preset.record_flag & (1<<i))) {
-      for (int j=0; j<16; ++j) {
+      for (uint8_t j=0; j<16; ++j) {
         preset_info.pattern_preset.patterns[i][j] = pgm_read_byte(&(scale_patterns[i][j]));
       }
     }

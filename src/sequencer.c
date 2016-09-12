@@ -37,9 +37,9 @@ void step_seq_on_normal(){
     ++divide_idx;
     return;
   }
-  cli();
   divide_idx = 1;
 
+  cli();
   if (_step < (current_values.v.step_length-1)) {
     ++_step;
     current_step = (_step + seq_start_shift) % 16;
@@ -48,8 +48,13 @@ void step_seq_on_normal(){
     current_step = seq_start_shift;
     update_seq_pattern();
   }
+  sei();
+
   start_gate_timer();
+
   update_knob_values();
+
+  cli();
   if (rec_mode == PLAY || rec_mode == REC) {
     play_recorded_knob_values();
     if (rec_mode == REC) {
@@ -58,10 +63,17 @@ void step_seq_on_normal(){
       next_play_pos();
     }
   }
+  sei();
+
   if (active_seq[current_step]) {
+    cli();
     update_pitch();
+    sei();
   }
+  cli();
   update_slide();
+  sei();
+  cli();
   update_wave_shape();
 
   changed_value_flags = 0;
@@ -70,8 +82,8 @@ void step_seq_on_normal(){
 
 static volatile char current_test_note = -1;
 void step_seq_on_edit_scale(){
-  cli();
   update_knob_values();
+  cli();
   char found = 0;
   for (char i=0; i<12 && !found; ++i) {
     if (edit_scale & (1<<i)) {
@@ -97,8 +109,8 @@ void step_seq_on_edit_scale(){
 
 static volatile uint8_t current_test_pos = 0;
 void step_seq_on_edit_pattern(){
-  cli();
   update_knob_values();
+  cli();
   uint8_t value = edit_pattern[current_test_pos];
   current_pitch1 = value + 64;
   update_oct_note();
@@ -138,7 +150,7 @@ void start_gate_timer() {
   //reset timer counter
   TCNT0 = 0; 
   //start timer
-  TCCR0B |= (1<<CS02) | (1<<CS00); // divide 1024
+  TCCR0B = (1<<CS02) | (1<<CS00); // divide 1024
   
   if (active_seq[current_step]) {
     //gate on
@@ -149,7 +161,6 @@ void start_gate_timer() {
 }
 
 void update_step_time() {
-  prev_step_interval = OCR1A;
   if (current_values.v.swing > 0) {
     uint16_t offset_interval = ((long)step_interval * current_values.v.swing) / 255;
     if (current_step % 2 == 0) {
@@ -181,7 +192,7 @@ void update_seq_pattern() {
     // rot start
     steprot = steprot - 16;
     seq_start_shift = steprot;
-    for (int i = 0; i < 16; ++i) {
+    for (uint8_t i = 0; i < 16; ++i) {
       if (i < steplen && steprot > 0) {
         active_seq[(i+seq_start_shift)%16] = !!(euclid_seq & (1 << ((i+steprot)%steplen)));
       } else {
@@ -191,7 +202,7 @@ void update_seq_pattern() {
   } else {
     // rot trigger
     seq_start_shift = 0;
-    for (int i = 0; i < 16; ++i) {
+    for (uint8_t i = 0; i < 16; ++i) {
       if (i < steplen && steprot > 0) {
         active_seq[i] = !!(euclid_seq & (1 << ((i + steprot)%steplen)));
       } else {
@@ -215,8 +226,8 @@ void randomize_seq() {
 
 uint8_t quantize_pitch(uint8_t pitch) {
   uint8_t result;
-  int base_value = pitch / 12 * 12;
-  int upper_value = pitch - base_value;
+  uint8_t base_value = pitch / 12 * 12;
+  uint8_t upper_value = pitch - base_value;
   upper_value = scale_table[current_values.v.scale_select][upper_value];
   int tmp = base_value + upper_value + (current_values.v.scale_transpose - 36);
   if (tmp > 119) {
@@ -296,7 +307,7 @@ void update_wave_shape() {
     selected_wavetable_type2_sign = !(tmp_wave_type2 & 0x04);
   }
 
-  if (is_changed(CHG_VAL_FLAG_WAVE_PHASE) || is_changed(CHG_VAL_FLAG_WAVE_PITCH_DURATION)) {
+  if (changed_value_flags & (_BV(CHG_VAL_FLAG_WAVE_PHASE) | _BV(CHG_VAL_FLAG_WAVE_PITCH_DURATION))) {
     reset_phase();
   }
 
