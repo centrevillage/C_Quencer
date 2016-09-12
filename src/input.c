@@ -93,10 +93,6 @@ uint8_t is_multi_tap(uint8_t button_idx, uint8_t count) {
   return button_history.button_idx == button_idx && button_history.count >= count;
 }
 
-uint8_t is_long_press(uint8_t button_idx, unsigned long interval_tick) {
-  return button_history.button_idx == button_idx && (button_history.last_leave - button_history.last_tick) > interval_tick;
-}
-
 uint8_t is_knob_multi(uint8_t knob_idx, uint8_t count) {
   return knob_history.knob_idx == knob_idx && knob_history.count >= count;
 }
