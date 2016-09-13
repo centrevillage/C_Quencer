@@ -72,7 +72,7 @@ ISR (TIMER2_OVF_vect) {
 
 unsigned long ticks() {
   cli();
-  uint32_t ticks = ((uint32_t)current_wrap_count * 256 + TCNT2) / 4;
+  uint32_t ticks = ((uint32_t)current_wrap_count * 256 + TCNT2);
   sei();
   return ticks;
 }
