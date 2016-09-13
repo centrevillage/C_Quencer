@@ -37,9 +37,9 @@ void step_seq_on_normal(){
     ++divide_idx;
     return;
   }
-  cli();
   divide_idx = 1;
 
+  cli();
   if (_step < (current_values.v.step_length-1)) {
     ++_step;
     current_step = (_step + seq_start_shift) % 16;
@@ -48,8 +48,15 @@ void step_seq_on_normal(){
     current_step = seq_start_shift;
     update_seq_pattern();
   }
+  sei();
+
   start_gate_timer();
+
+  cli();
   update_knob_values();
+  sei();
+
+  cli();
   if (rec_mode == PLAY || rec_mode == REC) {
     play_recorded_knob_values();
     if (rec_mode == REC) {
@@ -58,10 +65,17 @@ void step_seq_on_normal(){
       next_play_pos();
     }
   }
+  sei();
+
   if (active_seq[current_step]) {
+    cli();
     update_pitch();
+    sei();
   }
+  cli();
   update_slide();
+  sei();
+  cli();
   update_wave_shape();
 
   changed_value_flags = 0;
