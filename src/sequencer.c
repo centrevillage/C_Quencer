@@ -163,7 +163,6 @@ void start_gate_timer() {
 }
 
 void update_step_time() {
-  prev_step_interval = OCR1A;
   if (current_values.v.swing > 0) {
     uint16_t offset_interval = ((long)step_interval * current_values.v.swing) / 255;
     if (current_step % 2 == 0) {

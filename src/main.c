@@ -47,22 +47,14 @@ void setup() {
 }
 
 static uint8_t prev_short_tick = 0xFF;
-static uint16_t prev_timer_count = 0xFFFF;
+static uint8_t prev_timer_count = 0xFF;
 void loop() {
-  cli();
-  uint16_t current_timer_count = TCNT1;
-  sei();
-  uint8_t short_tick = TCNT2;
   output_led();
 
-  if (prev_timer_count != current_timer_count) {
-    uint16_t interval_count;
-    if (prev_timer_count > current_timer_count) {
-      interval_count = (prev_step_interval - prev_timer_count) + current_timer_count;
-    } else {
-      interval_count = current_timer_count - prev_timer_count;
-    }
-
+  uint8_t current_timer_count = TCNT2;
+  uint8_t short_tick = TCNT2 >> 2;
+  uint8_t interval_count = current_timer_count - prev_timer_count;
+  if (interval_count > 0) {
     output_osc_and_cv(interval_count, short_tick - prev_short_tick);
     prev_timer_count = current_timer_count;
     prev_short_tick = short_tick;

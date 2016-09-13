@@ -20,9 +20,9 @@ void timer_init() {
   TIMSK1 |= (1<<OCIE1A);
 
   // Timer 2 ==
-  TCCR2A = 0; // normal mode (overflow after about 16ms)
+  TCCR2A = 0; // normal mode (overflow after about 4ms)
   TIMSK2 |= (1<<TOIE0); // overflow interrupt
-  TCCR2B |= ((1<<CS02) | (1<<CS00)); // divide 1024
+  TCCR2B |= (1<<CS02); // divide 256
 }
 
 // gate timer interrupt
@@ -48,29 +48,31 @@ ISR (TIMER2_OVF_vect) {
   ++current_wrap_count;
   sei();
 
-  read_knob_values();
-  switch(edit_mode) {
-    case NORMAL:
-      if (!current_state.start && current_wrap_count % 16 == 0) {
-        update_knob_values();
-      }
-      break;
-    case SELECT:
-      if (current_wrap_count % 16 == 0) {
-        update_knob_values();
-      }
-      break;
-    case SCALE:
-    case PATTERN:
-      break;
-    default:
-      break;
+  if (current_wrap_count % 4 == 0) {
+    read_knob_values();
+    switch(edit_mode) {
+      case NORMAL:
+        if (!current_state.start && current_wrap_count % 64 == 0) {
+          update_knob_values();
+        }
+        break;
+      case SELECT:
+        if (current_wrap_count % 64 == 0) {
+          update_knob_values();
+        }
+        break;
+      case SCALE:
+      case PATTERN:
+        break;
+      default:
+        break;
+    }
   }
 }
 
 unsigned long ticks() {
   cli();
-  uint32_t ticks = (uint32_t)current_wrap_count * 256 + TCNT2;
+  uint32_t ticks = ((uint32_t)current_wrap_count * 256 + TCNT2) / 4;
   sei();
   return ticks;
 }
