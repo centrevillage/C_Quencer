@@ -9,17 +9,17 @@
 // timer1: trigger step timer
 // timer2: dac(cv&osc) timer
 void timer_init() {
-  // Timer 0 ==
+  // Timer 0 (trigger pulse length) ==
   TCCR0A = 0; // normal mode (overflow after about 16ms)
   TIMSK0 |= (1<<TOIE0); // overflow interrupt
 
-  // Timer 1 == 
+  // Timer 1 (step duration) == 
   stop_seq();
   TCCR1B |= (1<<WGM12); // CTC
   update_step_time();
   TIMSK1 |= (1<<OCIE1A);
 
-  // Timer 2 ==
+  // Timer 2 (time measuring and osc process interval) ==
   TCCR2A = 0; // normal mode (overflow after about 4ms)
   TIMSK2 |= (1<<TOIE0); // overflow interrupt
   TCCR2B |= (1<<CS02); // divide 256
