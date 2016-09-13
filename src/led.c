@@ -10,7 +10,7 @@ static volatile unsigned long last_led_disp_tick = 0;
 static uint8_t rec_led_count = 0;
 static uint8_t led_blink_count = 0;
 
-static int g_led_i = 0;
+static uint8_t g_led_i = 0;
 
 static const uint8_t led_idx_to_port_and_ddr[16][2] PROGMEM = {
   {0b00000010, 0b00000011},

@@ -613,7 +613,7 @@ void leave(uint8_t button_idx) {
 // TAP BUTTON = PD7, PCINT23
 ISR(PCINT2_vect) {
   for (uint8_t i = 0; i < 3; ++i) {
-    int pin = i + 5;
+    uint8_t pin = i + 5;
     if (bit_is_clear(PIND, pin)) {
       if (!button_state[i]) {
         press(i);

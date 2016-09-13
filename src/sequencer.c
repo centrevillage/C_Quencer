@@ -228,8 +228,8 @@ void randomize_seq() {
 
 uint8_t quantize_pitch(uint8_t pitch) {
   uint8_t result;
-  int base_value = pitch / 12 * 12;
-  int upper_value = pitch - base_value;
+  uint8_t base_value = pitch / 12 * 12;
+  uint8_t upper_value = pitch - base_value;
   upper_value = scale_table[current_values.v.scale_select][upper_value];
   int tmp = base_value + upper_value + (current_values.v.scale_transpose - 36);
   if (tmp > 119) {
