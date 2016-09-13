@@ -51,7 +51,7 @@ ISR (TIMER2_OVF_vect) {
   read_knob_values();
   switch(edit_mode) {
     case NORMAL:
-      if (current_wrap_count % 16 == 0 && !current_state.start) {
+      if (!current_state.start && current_wrap_count % 16 == 0) {
         update_knob_values();
       }
       break;

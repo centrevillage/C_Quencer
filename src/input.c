@@ -1,7 +1,6 @@
 #include "input.h"
 #include "variables.h"
 #include "sequencer.h"
-#include "adc.h"
 #include "timer.h"
 #include "led.h"
 #include "eeprom.h"
@@ -21,24 +20,15 @@ volatile uint8_t edit_pos;
 volatile uint16_t edit_scale;
 volatile uint8_t edit_pattern[16];
 
-static volatile uint8_t current_knob_idx = 0;
-static volatile uint8_t current_knob_value_idx = 0;
+volatile uint8_t knob_values[4][KNOB_VALUES_SIZE];
+volatile uint8_t current_knob_idx = 0;
+volatile uint8_t current_knob_value_idx = 0;
 
 static volatile uint8_t record_start = 0;
 static volatile uint8_t record_end = 0;
 static volatile uint8_t record_length = 0;
 static volatile uint8_t record_pos = 0;
 static volatile uint8_t play_pos = 0;
-
-// input task
-void read_knob_values() {
-  knob_values[current_knob_idx][current_knob_value_idx] = 255 - adc_read(current_knob_idx);
-  ++current_knob_idx;
-  if (current_knob_idx > 3) {
-    current_knob_idx = 0;
-    current_knob_value_idx = (current_knob_value_idx + 1) % KNOB_VALUES_SIZE;
-  }
-}
 
 static volatile uint16_t prev_values[] = {0, 0, 0, 0};
 void update_knob_values() {

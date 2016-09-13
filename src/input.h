@@ -2,6 +2,7 @@
 #include <avr/Interrupt.h>
 #include <stdlib.h>
 #include <string.h>
+#include "adc.h"
 
 #ifndef CQ_INPUT_H_
 #define CQ_INPUT_H_
@@ -96,7 +97,6 @@ extern volatile KnobHistory knob_history;
 volatile ControllerValue recorded_values[RECORDED_VALUES_SIZE];
 volatile uint16_t changed_value_flags; // 0 = not changed, 1 = changed
 
-static volatile uint8_t knob_values[4][KNOB_VALUES_SIZE];
 static volatile uint8_t button_state[4];
 
 extern volatile uint8_t edit_preset_num;
@@ -104,8 +104,19 @@ extern volatile uint8_t edit_pos;
 extern volatile uint16_t edit_scale;
 extern volatile uint8_t edit_pattern[16];
 
+extern volatile uint8_t knob_values[4][KNOB_VALUES_SIZE];
+extern volatile uint8_t current_knob_idx;
+extern volatile uint8_t current_knob_value_idx;
 
-void read_knob_values();
+inline void read_knob_values() {
+  knob_values[current_knob_idx][current_knob_value_idx] = 255 - adc_read(current_knob_idx);
+  ++current_knob_idx;
+  if (current_knob_idx > 3) {
+    current_knob_idx = 0;
+    current_knob_value_idx = (current_knob_value_idx + 1) % KNOB_VALUES_SIZE;
+  }
+}
+
 void update_knob_values();
 void set_current_value(uint8_t value, uint8_t knob_idx);
 void set_current_value_on_normal(uint8_t value, uint8_t knob_idx);
