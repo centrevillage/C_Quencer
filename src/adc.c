@@ -11,10 +11,3 @@ void adc_init() {
   loop_until_bit_is_clear(ADCSRA, ADSC);
   result = ADCH;
 }
-
-uint8_t adc_read(uint8_t pin) {
-  ADMUX = (ADMUX & 0xF0) | pin;
-  ADCSRA |= (1<<ADSC);
-  loop_until_bit_is_clear(ADCSRA, ADSC);
-  return ADCH;
-};
