@@ -26,12 +26,23 @@ void timer_init() {
 }
 
 // gate timer interrupt
-ISR (TIMER0_OVF_vect) {
-  //stop timer
-  TCCR0B = 0;
-  //gate off(=HIGH) (PB2)
-  PORTB |= _BV(2);
-  active_step_gate = 0;
+ISR (TIMER0_OVF_vect, ISR_NAKED) {
+  ////stop timer
+  //TCCR0B = 0;
+  ////gate off(=HIGH) (PB2)
+  //PORTB |= _BV(2);
+  //active_step_gate = 0;
+  asm volatile(
+    "push r1" "\n\t"
+    "clr r1" "\n\t"
+    "TCCR0B = 0x25" "\n\t"
+    "out TCCR0B, r1" "\n\t"
+    "PORTB = 0x5" "\n\t"
+    "sbi PORTB, 2" "\n\t"
+    "sts active_step_gate, r1" "\n\t" 
+    "pop r1" "\n\t"
+    "reti" "\n\t"
+  );
 }
 
 // step timer interrupt
