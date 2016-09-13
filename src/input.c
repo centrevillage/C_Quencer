@@ -43,7 +43,14 @@ inline update_knob_value_inline(uint8_t i) {
   //for (uint8_t j = 0; j < KNOB_VALUES_SIZE; ++j) {
   //  new_value_sum += knob_values[i][j];
   //}
-  new_value_sum = knob_values[i][0] + knob_values[i][1] + knob_values[i][2] + knob_values[i][3] + knob_values[i][4] + knob_values[i][5] + knob_values[i][6] + knob_values[i][7];
+  new_value_sum =  knob_values[i][0];
+  new_value_sum += knob_values[i][1];
+  new_value_sum += knob_values[i][2];
+  new_value_sum += knob_values[i][3];
+  new_value_sum += knob_values[i][4];
+  new_value_sum += knob_values[i][5];
+  new_value_sum += knob_values[i][6];
+  new_value_sum += knob_values[i][7];
 
   int diff = new_value_sum - prev_value * KNOB_VALUES_SIZE;
   if (diff >= KNOB_VALUES_SIZE) {
