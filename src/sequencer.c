@@ -194,7 +194,7 @@ void update_seq_pattern() {
     // rot start
     steprot = steprot - 16;
     seq_start_shift = steprot;
-    for (int i = 0; i < 16; ++i) {
+    for (uint8_t i = 0; i < 16; ++i) {
       if (i < steplen && steprot > 0) {
         active_seq[(i+seq_start_shift)%16] = !!(euclid_seq & (1 << ((i+steprot)%steplen)));
       } else {
@@ -204,7 +204,7 @@ void update_seq_pattern() {
   } else {
     // rot trigger
     seq_start_shift = 0;
-    for (int i = 0; i < 16; ++i) {
+    for (uint8_t i = 0; i < 16; ++i) {
       if (i < steplen && steprot > 0) {
         active_seq[i] = !!(euclid_seq & (1 << ((i + steprot)%steplen)));
       } else {

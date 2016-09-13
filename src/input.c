@@ -612,7 +612,7 @@ void leave(uint8_t button_idx) {
 // START BUTTON = PD6, PCINT22
 // TAP BUTTON = PD7, PCINT23
 ISR(PCINT2_vect) {
-  for (int i = 0; i < 3; ++i) {
+  for (uint8_t i = 0; i < 3; ++i) {
     int pin = i + 5;
     if (bit_is_clear(PIND, pin)) {
       if (!button_state[i]) {
