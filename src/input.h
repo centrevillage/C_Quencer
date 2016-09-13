@@ -134,6 +134,7 @@ void press_on_select(uint8_t button_idx);
 void press_on_scale(uint8_t button_idx);
 void press_on_pattern(uint8_t button_idx);
 void record_current_knob_values();
+void fill_remains_records(uint8_t quantized_len);
 void start_recording();
 void end_recording();
 void next_play_pos();
@@ -144,7 +145,5 @@ void enter_edit_select_mode();
 void leave_edit_select_mode();
 void enter_edit_scale_mode();
 void enter_edit_pattern_mode();
-
-uint8_t is_changed(uint8_t idx);
 
 #endif /* CQ_INPUT_H_ */

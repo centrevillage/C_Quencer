@@ -307,7 +307,7 @@ void update_wave_shape() {
     selected_wavetable_type2_sign = !(tmp_wave_type2 & 0x04);
   }
 
-  if (is_changed(CHG_VAL_FLAG_WAVE_PHASE) || is_changed(CHG_VAL_FLAG_WAVE_PITCH_DURATION)) {
+  if (changed_value_flags & (_BV(CHG_VAL_FLAG_WAVE_PHASE) | _BV(CHG_VAL_FLAG_WAVE_PITCH_DURATION))) {
     reset_phase();
   }
 

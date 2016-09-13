@@ -129,19 +129,16 @@ void set_current_value(uint8_t value, uint8_t knob_idx) {
 
 void set_current_value_on_normal(uint8_t value, uint8_t knob_idx){
   uint8_t tmp_value;
-  uint8_t is_change_seq = 0;
   switch (knob_idx) {
     case 0: // fill / len / slide / wave select
       switch (func_mode) {
         case NONE:
           current_values.v.step_fill = value >> 4;
           changed_value_flags |= 1<<CHG_VAL_FLAG_STEP_FILL;
-          is_change_seq = 1;
           break;
         case FUNC:
           current_values.v.step_length = (value >> 4) + 1;
           changed_value_flags |= 1<<CHG_VAL_FLAG_STEP_LENGTH;
-          is_change_seq = 1;
           break;
         case HID:
           current_values.v.slide = value >> 4;
@@ -160,7 +157,6 @@ void set_current_value_on_normal(uint8_t value, uint8_t knob_idx){
         case NONE:
           current_values.v.step_rot = value >> 3;
           changed_value_flags |= 1<<CHG_VAL_FLAG_STEP_ROT;
-          is_change_seq = 1;
           break;
         case FUNC:
           current_values.v.step_rand = value >> 3;
@@ -237,7 +233,7 @@ void set_current_value_on_normal(uint8_t value, uint8_t knob_idx){
     default:
       break;
   }
-  if (is_change_seq) {
+  if (changed_value_flags & (_BV(CHG_VAL_FLAG_STEP_FILL) | _BV(CHG_VAL_FLAG_STEP_LENGTH) | _BV(CHG_VAL_FLAG_STEP_ROT))) {
     set_display_mode(SEQ);
     update_seq_pattern();
   }
@@ -590,10 +586,7 @@ void leave_on_rec_mode() {
     }
     play_pos = rec_len_diff;
   } else if (record_length < quantized_len) {
-    changed_value_flags = 0;
-    while (record_length < quantized_len) {
-      record_current_knob_values();
-    }
+    fill_remains_records(quantized_len);
     play_pos = record_length + rec_len_diff;
   } else {
     play_pos = 0;
@@ -698,6 +691,18 @@ void record_current_knob_values() {
   record_pos = (record_pos + 1) % RECORDED_VALUES_SIZE;
 }
 
+void fill_remains_records(uint8_t quantized_len) {
+  while (record_length < quantized_len) {
+    for (uint8_t i = 0; i < sizeof(ControllerValue); ++i) {
+      recorded_values[record_pos].values[i] = 0xFF; // no record
+    }
+    if (record_length < RECORDED_VALUES_SIZE) {
+      record_length++;
+    }
+    record_pos = (record_pos + 1) % RECORDED_VALUES_SIZE;
+  }
+}
+
 void start_recording() {
   record_start = record_pos;
   record_length = 0;
@@ -715,16 +720,15 @@ void play_recorded_knob_values() {
   if (record_length == 0) {
     return;
   }
-  uint8_t is_change_seq = 0;
+  uint8_t changed_seq_flags = changed_value_flags & (_BV(CHG_VAL_FLAG_STEP_FILL) | _BV(CHG_VAL_FLAG_STEP_LENGTH) | _BV(CHG_VAL_FLAG_STEP_ROT));
   for (uint8_t i = 0; i < sizeof(ControllerValue); ++i) {
     if (!(changed_value_flags & (1<<i)) && recorded_values[record_pos].values[i] != 0xFF) {
       current_values.values[i] = recorded_values[record_pos].values[i];
-      if (i < 3) { // step_fill, step_length, step_rot
-        is_change_seq = 1;
-      }
+      changed_value_flags |= (1<<i);
     }
   }
-  if (is_change_seq) {
+  uint8_t changed_seq_flags_after_play = changed_value_flags & (_BV(CHG_VAL_FLAG_STEP_FILL) | _BV(CHG_VAL_FLAG_STEP_LENGTH) | _BV(CHG_VAL_FLAG_STEP_ROT));
+  if (changed_seq_flags != changed_seq_flags_after_play) {
     update_seq_pattern();
   }
 }
@@ -766,9 +770,5 @@ void reset_all_input() {
   edit_pos = 0;
   edit_scale = 1;
   memset(&edit_pattern, 0, 16);
-}
-
-uint8_t is_changed(uint8_t idx) {
-  return (changed_value_flags & (1<<idx)) || recorded_values[record_pos].values[idx] != 0xFF;
 }
 
