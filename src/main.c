@@ -46,6 +46,26 @@ void setup() {
   update_knob_values();
 }
 
+inline void update_knob_values_on_stop() {
+  switch(edit_mode) {
+    case NORMAL:
+      if (!current_state.start && current_wrap_count % 64 == 0) {
+        update_knob_values();
+      }
+      break;
+    case SELECT:
+      if (current_wrap_count % 64 == 0) {
+        update_knob_values();
+      }
+      break;
+    case SCALE:
+    case PATTERN:
+      break;
+    default:
+      break;
+  }
+}
+
 static uint8_t prev_short_tick = 0xFF;
 static uint8_t prev_timer_count = 0xFF;
 void loop() {
@@ -58,6 +78,8 @@ void loop() {
     output_osc_and_cv(interval_count, short_tick - prev_short_tick);
     prev_timer_count = current_timer_count;
     prev_short_tick = short_tick;
+
+    update_knob_values_on_stop();
   }
 }
 
