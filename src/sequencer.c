@@ -150,7 +150,7 @@ void start_gate_timer() {
   //reset timer counter
   TCNT0 = 0; 
   //start timer
-  TCCR0B |= (1<<CS02) | (1<<CS00); // divide 1024
+  TCCR0B = (1<<CS02) | (1<<CS00); // divide 1024
   
   if (active_seq[current_step]) {
     //gate on

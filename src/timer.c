@@ -28,7 +28,7 @@ void timer_init() {
 // gate timer interrupt
 ISR (TIMER0_OVF_vect) {
   //stop timer
-  TCCR0B &= ~((1<<CS02) | (1<<CS00));
+  TCCR0B = 0;
   //gate off(=HIGH) (PB2)
   PORTB |= _BV(2);
   active_step_gate = 0;
