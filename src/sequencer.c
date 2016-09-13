@@ -52,9 +52,7 @@ void step_seq_on_normal(){
 
   start_gate_timer();
 
-  cli();
   update_knob_values();
-  sei();
 
   cli();
   if (rec_mode == PLAY || rec_mode == REC) {
@@ -84,8 +82,8 @@ void step_seq_on_normal(){
 
 static volatile char current_test_note = -1;
 void step_seq_on_edit_scale(){
-  cli();
   update_knob_values();
+  cli();
   char found = 0;
   for (char i=0; i<12 && !found; ++i) {
     if (edit_scale & (1<<i)) {
@@ -111,8 +109,8 @@ void step_seq_on_edit_scale(){
 
 static volatile uint8_t current_test_pos = 0;
 void step_seq_on_edit_pattern(){
-  cli();
   update_knob_values();
+  cli();
   uint8_t value = edit_pattern[current_test_pos];
   current_pitch1 = value + 64;
   update_oct_note();

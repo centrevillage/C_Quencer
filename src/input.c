@@ -60,10 +60,10 @@ inline update_knob_value_inline(uint8_t i) {
 }
 
 void update_knob_values() {
-  update_knob_value_inline(0);
-  update_knob_value_inline(1);
-  update_knob_value_inline(2);
-  update_knob_value_inline(3);
+  cli(); update_knob_value_inline(0); sei();
+  cli(); update_knob_value_inline(1); sei();
+  cli(); update_knob_value_inline(2); sei();
+  cli(); update_knob_value_inline(3); sei();
 }
 
 void reset_knob_history(uint8_t knob_idx) {
