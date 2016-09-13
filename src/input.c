@@ -36,10 +36,7 @@ void read_knob_values() {
   ++current_knob_idx;
   if (current_knob_idx > 3) {
     current_knob_idx = 0;
-    ++current_knob_value_idx;
-    if (current_knob_value_idx >= KNOB_VALUES_SIZE) {
-      current_knob_value_idx = 0;
-    }
+    current_knob_value_idx = (current_knob_value_idx + 1) % KNOB_VALUES_SIZE;
   }
 }
 
