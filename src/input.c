@@ -676,10 +676,7 @@ void record_current_knob_values() {
     record_length++;
   }
 
-  ++record_pos;
-  if (record_pos >= RECORDED_VALUES_SIZE) {
-    record_pos = 0;
-  }
+  record_pos = (record_pos + 1) % RECORDED_VALUES_SIZE;
 }
 
 void start_recording() {
