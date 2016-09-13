@@ -82,8 +82,8 @@ void output_osc_and_cv_on_normal(uint16_t interval_count, uint8_t delta_tick){
     slide_buf_value1 += (val1 * interval_count) << slide_oct1;
     slide_buf_value2 += (val2 * interval_count) << slide_oct2;
     uint16_t slide_buf_value2_count = slide_buf_value2 >> 12;
-    wave1_count_in_cycle = (wave1_count_in_cycle + (slide_buf_value1 >> 12)) % 7645;
-    wave2_count_in_cycle = (wave2_count_in_cycle + (slide_buf_value2 >> 12)) % 7645;
+    wave1_count_in_cycle = (wave1_count_in_cycle + (slide_buf_value1 >> 12)) % 30578;
+    wave2_count_in_cycle = (wave2_count_in_cycle + (slide_buf_value2 >> 12)) % 30578;
     slide_buf_value1 &= 0x00000FFF;
     slide_buf_value2 &= 0x00000FFF;
   } else {

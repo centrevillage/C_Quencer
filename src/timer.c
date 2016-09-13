@@ -58,10 +58,7 @@ ISR (TIMER2_OVF_vect) {
   cli();
   ++current_wrap_count;
   sei();
-
-  if (current_wrap_count % 4 == 0) {
-    read_knob_values();
-  }
+  read_knob_values();
 }
 
 unsigned long ticks() {
