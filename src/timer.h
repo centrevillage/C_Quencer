@@ -7,6 +7,4 @@
 void timer_init();
 unsigned long ticks();
 
-extern volatile unsigned long current_wrap_count;
-
 #endif /* CQ_TIMER_H_ */

@@ -42,7 +42,7 @@ ISR (TIMER1_COMPA_vect) {
   }
 }
 
-volatile unsigned long current_wrap_count = 0L;
+volatile uint16_t current_wrap_count = 0;
 ISR (TIMER2_OVF_vect) {
   cli();
   ++current_wrap_count;
@@ -70,7 +70,7 @@ ISR (TIMER2_OVF_vect) {
 
 unsigned long ticks() {
   cli();
-  unsigned long ticks = current_wrap_count * 256 + TCNT2;
+  uint32_t ticks = (uint32_t)current_wrap_count * 256 + TCNT2;
   sei();
   return ticks;
 }
