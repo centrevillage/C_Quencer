@@ -136,7 +136,6 @@ void press_on_pattern(uint8_t button_idx);
 void record_current_knob_values();
 void start_recording();
 void end_recording();
-void clear_recording();
 void next_play_pos();
 void play_recorded_knob_values();
 void reset_all_input();

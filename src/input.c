@@ -64,6 +64,10 @@ inline update_knob_value_inline(uint8_t i) {
   }
 }
 
+inline void clear_recording() {
+  memset(&recorded_values, 0xFF, sizeof(ControllerValue) * RECORDED_VALUES_SIZE);
+}
+
 void update_knob_values() {
   cli(); update_knob_value_inline(0); sei();
   cli(); update_knob_value_inline(1); sei();
@@ -725,10 +729,6 @@ void play_recorded_knob_values() {
   }
 }
 
-void clear_recording() {
-  memset(&recorded_values, 0xFF, sizeof(ControllerValue) * RECORDED_VALUES_SIZE);
-}
-
 void reset_all_input() {
   current_values.v.step_fill = 4;
   current_values.v.step_length = 16;
@@ -759,7 +759,8 @@ void reset_all_input() {
   memset(knob_values, 0, 4*KNOB_VALUES_SIZE);
   memset(button_state, 0, 4);
   changed_value_flags = 0;
-  memset(&recorded_values, 0, sizeof(ControllerValue) * RECORDED_VALUES_SIZE);
+
+  clear_recording();
 
   edit_preset_num = 0;
   edit_pos = 0;
