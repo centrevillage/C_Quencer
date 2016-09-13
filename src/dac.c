@@ -42,7 +42,9 @@ void output_dac_b(uint16_t data) {
 void output_osc_and_cv(uint16_t interval_count, uint8_t delta_tick) {
   switch(edit_mode) {
     case NORMAL:
-      output_osc_and_cv_on_normal(interval_count, delta_tick);
+      if (current_state.start) {
+        output_osc_and_cv_on_normal(interval_count, delta_tick);
+      }
       break;
     case SCALE:
     case PATTERN:
