@@ -48,12 +48,10 @@ inline update_knob_value_inline(uint8_t i) {
   int diff = new_value_sum - prev_value * KNOB_VALUES_SIZE;
   if (diff >= KNOB_VALUES_SIZE) {
     new_value = prev_value + diff / KNOB_VALUES_SIZE;
+    set_current_value((uint8_t)new_value, i);
+    prev_values[i] = new_value;
   } else if (diff <= -KNOB_VALUES_SIZE) {
     new_value = prev_value - ((-diff) / KNOB_VALUES_SIZE);
-  } else {
-    new_value = prev_value;
-  }
-  if (new_value != prev_value) {
     set_current_value((uint8_t)new_value, i);
     prev_values[i] = new_value;
   }
