@@ -31,29 +31,39 @@ static volatile uint8_t record_pos = 0;
 static volatile uint8_t play_pos = 0;
 
 static volatile uint16_t prev_values[] = {0, 0, 0, 0};
-void update_knob_values() {
+
+inline update_knob_value_inline(uint8_t i) {
   uint16_t prev_value;
   uint16_t new_value_sum;
   uint16_t new_value;
-  for (uint8_t i = 0; i < 4; ++i) {
-    prev_value = prev_values[i];
-    new_value_sum = 0;
-    for (uint8_t j = 0; j < KNOB_VALUES_SIZE; ++j) {
-      new_value_sum += knob_values[i][j];
-    }
-    int diff = new_value_sum - prev_value * KNOB_VALUES_SIZE;
-    if (diff >= KNOB_VALUES_SIZE) {
-      new_value = prev_value + diff / KNOB_VALUES_SIZE;
-    } else if (diff <= -KNOB_VALUES_SIZE) {
-      new_value = prev_value - ((-diff) / KNOB_VALUES_SIZE);
-    } else {
-      new_value = prev_value;
-    }
-    if (new_value != prev_value) {
-      set_current_value((uint8_t)new_value, i);
-      prev_values[i] = new_value;
-    }
+
+  prev_value = prev_values[i];
+
+  //new_value_sum = 0;
+  //for (uint8_t j = 0; j < KNOB_VALUES_SIZE; ++j) {
+  //  new_value_sum += knob_values[i][j];
+  //}
+  new_value_sum = knob_values[i][0] + knob_values[i][1] + knob_values[i][2] + knob_values[i][3] + knob_values[i][4] + knob_values[i][5] + knob_values[i][6] + knob_values[i][7];
+
+  int diff = new_value_sum - prev_value * KNOB_VALUES_SIZE;
+  if (diff >= KNOB_VALUES_SIZE) {
+    new_value = prev_value + diff / KNOB_VALUES_SIZE;
+  } else if (diff <= -KNOB_VALUES_SIZE) {
+    new_value = prev_value - ((-diff) / KNOB_VALUES_SIZE);
+  } else {
+    new_value = prev_value;
   }
+  if (new_value != prev_value) {
+    set_current_value((uint8_t)new_value, i);
+    prev_values[i] = new_value;
+  }
+}
+
+void update_knob_values() {
+  update_knob_value_inline(0);
+  update_knob_value_inline(1);
+  update_knob_value_inline(2);
+  update_knob_value_inline(3);
 }
 
 void reset_knob_history(uint8_t knob_idx) {
