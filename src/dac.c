@@ -42,7 +42,7 @@ void output_dac_b(uint16_t data) {
 void output_osc_and_cv(uint16_t interval_count, uint8_t delta_tick) {
   switch(edit_mode) {
     case NORMAL:
-      if (current_state.start) {
+      if (TCCR1B & _BV(CS12)) {
         output_osc_and_cv_on_normal(interval_count, delta_tick);
       }
       break;
@@ -64,6 +64,7 @@ volatile uint16_t wave1_count_in_cycle = 0;
 volatile uint16_t wave2_count_in_cycle = 0;
 volatile uint16_t current_table_index1 = 0;
 volatile uint16_t current_table_index2 = 0;
+const uint8_t shift_oct = 1;
 void output_osc_and_cv_on_normal(uint16_t interval_count, uint8_t delta_tick){
   cli();
   uint16_t cv_pitch = current_pitch1_dec;
@@ -81,16 +82,16 @@ void output_osc_and_cv_on_normal(uint16_t interval_count, uint8_t delta_tick){
     uint16_t slide_note2 = slide_pitch2 % (12*256);
     uint32_t val1 = pgm_read_word(&(cycle_speed_table[slide_note1]));
     uint32_t val2 = pgm_read_word(&(cycle_speed_table[slide_note2]));
-    slide_buf_value1 += (val1 * interval_count) << slide_oct1;
-    slide_buf_value2 += (val2 * interval_count) << slide_oct2;
+    slide_buf_value1 += (val1 * interval_count) << (slide_oct1 + shift_oct);
+    slide_buf_value2 += (val2 * interval_count) << (slide_oct2 + shift_oct);
     uint16_t slide_buf_value2_count = slide_buf_value2 >> 12;
-    wave1_count_in_cycle = (wave1_count_in_cycle + (slide_buf_value1 >> 12)) % 30578;
-    wave2_count_in_cycle = (wave2_count_in_cycle + (slide_buf_value2 >> 12)) % 30578;
+    wave1_count_in_cycle = (wave1_count_in_cycle + (slide_buf_value1 >> 12)) % 61156;
+    wave2_count_in_cycle = (wave2_count_in_cycle + (slide_buf_value2 >> 12)) % 61156;
     slide_buf_value1 &= 0x00000FFF;
     slide_buf_value2 &= 0x00000FFF;
   } else {
-    wave1_count_in_cycle = (wave1_count_in_cycle + (interval_count << current_oct1)) % cycle_length1;
-    wave2_count_in_cycle = (wave2_count_in_cycle + (interval_count << current_oct2)) % cycle_length2;
+    wave1_count_in_cycle = (wave1_count_in_cycle + (interval_count << (current_oct1 + shift_oct))) % cycle_length1;
+    wave2_count_in_cycle = (wave2_count_in_cycle + (interval_count << (current_oct2 + shift_oct))) % cycle_length2;
   }
 
   current_table_index1 = (uint32_t)wave1_count_in_cycle * WAVETABLE_SIZE / cycle_length1;

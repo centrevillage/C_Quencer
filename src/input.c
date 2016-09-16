@@ -406,7 +406,7 @@ void press_on_normal(uint8_t button_idx) {
   switch(button_idx) {
     case 0:
       current_state.func = 1;
-      if (is_multi_tap(button_idx, 5) && button_history.interval_tick < MULTI_TAP_MAX_INTERVAL) {
+      if (is_multi_tap(button_idx, 5)) {
         enter_edit_select_mode();
         reset_button_history(button_idx);
       }
@@ -432,7 +432,7 @@ void press_on_normal(uint8_t button_idx) {
       break;
     case 2:
       if (func_mode == FUNC) {
-        if (is_multi_tap(button_idx, 2) && button_history.interval_tick < MULTI_TAP_MAX_INTERVAL) {
+        if (is_multi_tap(button_idx, 2)) {
           set_divide(button_history.count);
         } else {
           set_divide(1);
@@ -440,7 +440,7 @@ void press_on_normal(uint8_t button_idx) {
         }
       } else {
         current_state.hid = 1;
-        if (is_multi_tap(button_idx, 2) && ((button_history.last_leave < button_history.last_tick) || (button_history.last_leave - button_history.last_tick) > TAP_TEMPO_MIN_INTERVAL)) {
+        if (is_multi_tap(button_idx, 2)) {
           set_step_interval(button_history.interval_tick/16);
         }
       }
@@ -486,7 +486,7 @@ void press_on_normal(uint8_t button_idx) {
 void press_on_select(uint8_t button_idx){
   switch(button_idx) {
     case 0:
-      if (is_multi_tap(button_idx, 2) && button_history.interval_tick < MULTI_TAP_MAX_INTERVAL) {
+      if (is_multi_tap(button_idx, 2)) {
         leave_edit_select_mode();
         reset_button_history(button_idx);
       }
@@ -498,7 +498,7 @@ void press_on_select(uint8_t button_idx){
 void press_on_scale(uint8_t button_idx){
   switch(button_idx) {
     case 0:
-      if (is_multi_tap(button_idx, 2) && button_history.interval_tick < MULTI_TAP_MAX_INTERVAL) {
+      if (is_multi_tap(button_idx, 2)) {
         leave_edit_select_mode();
         reset_button_history(button_idx);
       }
@@ -524,7 +524,7 @@ void press_on_scale(uint8_t button_idx){
 void press_on_pattern(uint8_t button_idx){
   switch(button_idx) {
     case 0:
-      if (is_multi_tap(button_idx, 2) && button_history.interval_tick < MULTI_TAP_MAX_INTERVAL) {
+      if (is_multi_tap(button_idx, 2)) {
         leave_edit_select_mode();
         reset_button_history(button_idx);
       }
