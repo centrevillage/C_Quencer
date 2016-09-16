@@ -66,21 +66,25 @@ inline void update_knob_values_on_stop() {
   }
 }
 
-static uint8_t prev_short_tick = 0xFF;
-static uint8_t prev_timer_count = 0xFF;
-void loop() {
-  output_led();
+uint8_t prev_count = 0;
+uint8_t div16_count_buf = 0;
+inline void loop() {
+  uint8_t current_count = TCNT2;
+  uint8_t interval_count = current_count - prev_count;
+  if (interval_count > 0 ) {
 
-  uint8_t current_timer_count = TCNT2;
-  uint8_t short_tick = TCNT2 >> 2;
-  uint8_t interval_count = current_timer_count - prev_timer_count;
-  if (interval_count > 0) {
-    output_osc_and_cv(interval_count, short_tick - prev_short_tick);
-    prev_timer_count = current_timer_count;
-    prev_short_tick = short_tick;
+    if (interval_count > 0) {
+      div16_count_buf += interval_count;
+      uint8_t div16_interval = interval_count / 8;
+      div16_count_buf -= div16_interval * 8;
 
-    update_knob_values_on_stop();
+      output_osc_and_cv(interval_count, div16_interval);
+    }
+
+    prev_count = current_count;
   }
+  output_led();
+  update_knob_values_on_stop();
 }
 
 // from Arduino ==

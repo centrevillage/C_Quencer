@@ -64,7 +64,7 @@ volatile uint16_t wave1_count_in_cycle = 0;
 volatile uint16_t wave2_count_in_cycle = 0;
 volatile uint16_t current_table_index1 = 0;
 volatile uint16_t current_table_index2 = 0;
-const uint8_t shift_oct = 1;
+const uint8_t shift_oct = 0;
 void output_osc_and_cv_on_normal(uint16_t interval_count, uint8_t delta_tick){
   cli();
   uint16_t cv_pitch = current_pitch1_dec;

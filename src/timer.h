@@ -5,7 +5,7 @@
 #define CQ_TIMER_H_
 
 void timer_init();
-unsigned long ticks();
+uint32_t ticks();
 
 extern volatile uint16_t current_wrap_count;
 
