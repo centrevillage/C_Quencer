@@ -408,6 +408,7 @@ void press_on_normal(uint8_t button_idx) {
       current_state.func = 1;
       if (is_multi_tap(button_idx, 5) && button_history.interval_tick < MULTI_TAP_MAX_INTERVAL) {
         enter_edit_select_mode();
+        reset_button_history(button_idx);
       }
       break;
     case 1:
@@ -487,6 +488,7 @@ void press_on_select(uint8_t button_idx){
     case 0:
       if (is_multi_tap(button_idx, 2) && button_history.interval_tick < MULTI_TAP_MAX_INTERVAL) {
         leave_edit_select_mode();
+        reset_button_history(button_idx);
       }
       break;
     default:
@@ -498,6 +500,7 @@ void press_on_scale(uint8_t button_idx){
     case 0:
       if (is_multi_tap(button_idx, 2) && button_history.interval_tick < MULTI_TAP_MAX_INTERVAL) {
         leave_edit_select_mode();
+        reset_button_history(button_idx);
       }
       break;
     case 1:
@@ -523,6 +526,7 @@ void press_on_pattern(uint8_t button_idx){
     case 0:
       if (is_multi_tap(button_idx, 2) && button_history.interval_tick < MULTI_TAP_MAX_INTERVAL) {
         leave_edit_select_mode();
+        reset_button_history(button_idx);
       }
       break;
     case 1:
