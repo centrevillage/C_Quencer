@@ -29,9 +29,11 @@ enum EditMode {NORMAL, SELECT, SCALE, PATTERN};
 #define KNOB_VALUES_SIZE 8
 #define RECORDED_VALUES_SIZE 64
 
-#define MULTI_TAP_TIMEOUT_INTERVAL 1000000L
-#define FLUTTERING_INTERVAL 800
-#define TAP_TEMPO_MIN_INTERVAL 2048
+#define MULTI_TAP_TIMEOUT_INTERVAL 4000
+#define FLUTTERING_INTERVAL 3
+#define TAP_TEMPO_MIN_INTERVAL 8
+
+#define TAP_TEMPO_TIMEOUT 1048575L
 
 extern volatile enum EditMode edit_mode;
 
@@ -82,16 +84,16 @@ typedef struct {
   enum FuncMode mode; 
   uint8_t button_idx;
   uint8_t count;
-  unsigned long last_tick;
-  unsigned long interval_tick;
-  unsigned long last_leave;
+  uint16_t last_tick;
+  uint16_t interval_tick;
+  uint16_t last_leave;
 } ButtonHistory;
 
 typedef struct {
   uint8_t knob_idx;
   uint8_t count;
-  unsigned long last_tick;
-  unsigned long interval_tick;
+  uint16_t last_tick;
+  uint16_t interval_tick;
 } KnobHistory;
 
 extern volatile ControllerState current_state;
@@ -139,6 +141,7 @@ void end_recording();
 void next_play_pos();
 void play_recorded_knob_values();
 void reset_all_input();
+void reset_button_history(uint8_t button_idx);
 
 void enter_edit_select_mode();
 void leave_edit_select_mode();

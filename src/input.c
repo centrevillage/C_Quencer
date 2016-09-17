@@ -30,9 +30,12 @@ static volatile uint8_t record_length = 0;
 static volatile uint8_t record_pos = 0;
 static volatile uint8_t play_pos = 0;
 
-static volatile uint16_t prev_values[] = {0, 0, 0, 0};
+volatile uint16_t prev_values[] = {0, 0, 0, 0};
 
-inline update_knob_value_inline(uint8_t i) {
+volatile uint32_t tap_tempo_hp_tick = 0;
+volatile uint8_t in_tap_tempo = 0;
+
+inline void update_knob_value_inline(uint8_t i) {
   uint16_t prev_value;
   uint16_t new_value_sum;
   uint16_t new_value;
@@ -64,11 +67,24 @@ inline update_knob_value_inline(uint8_t i) {
   }
 }
 
+inline void check_timeout() {
+  if (ticks() - button_history.last_tick > MULTI_TAP_TIMEOUT_INTERVAL) {
+    reset_button_history(button_history.button_idx);
+  }
+
+  if (in_tap_tempo) {
+    if (hp_ticks() - tap_tempo_hp_tick > TAP_TEMPO_TIMEOUT) {
+      in_tap_tempo = 0;
+    }
+  }
+}
+
 inline void clear_recording() {
   memset(&recorded_values, 0xFF, sizeof(ControllerValue) * RECORDED_VALUES_SIZE);
 }
 
 void update_knob_values() {
+  cli(); check_timeout(); sei();
   cli(); update_knob_value_inline(0); sei();
   cli(); update_knob_value_inline(1); sei();
   cli(); update_knob_value_inline(2); sei();
@@ -76,7 +92,7 @@ void update_knob_values() {
 }
 
 void reset_knob_history(uint8_t knob_idx) {
-  unsigned long t = ticks();
+  uint16_t t = ticks();
   knob_history.knob_idx = knob_idx;
   knob_history.count = 1;
   knob_history.last_tick = t;
@@ -85,7 +101,7 @@ void reset_knob_history(uint8_t knob_idx) {
 
 void update_knob_history(uint8_t knob_idx) {
   if (knob_history.knob_idx == knob_idx) {
-    unsigned long t = ticks();
+    uint16_t t = ticks();
     knob_history.knob_idx = knob_idx;
     knob_history.count += 1;
     knob_history.interval_tick = t - knob_history.last_tick;
@@ -336,7 +352,7 @@ enum FuncMode get_func_mode() {
 }
 
 void reset_button_history(uint8_t button_idx) {
-    unsigned long t = ticks();
+    uint16_t t = ticks();
     enum FuncMode mode = get_func_mode();
     button_history.mode = mode;
     button_history.button_idx = button_idx;
@@ -348,7 +364,7 @@ void reset_button_history(uint8_t button_idx) {
 void update_button_history(uint8_t button_idx) {
   enum FuncMode mode = get_func_mode();
   if (button_history.mode == mode && button_history.button_idx == button_idx) {
-    unsigned long t = ticks();
+    uint16_t t = ticks();
     button_history.button_idx = button_idx;
     button_history.count += 1;
     button_history.interval_tick = t - button_history.last_tick;
@@ -361,7 +377,7 @@ void update_button_history(uint8_t button_idx) {
 void update_button_history_on_leave(uint8_t button_idx) {
   enum FuncMode mode = get_func_mode();
   if (button_history.mode == mode && button_history.button_idx == button_idx) {
-    unsigned long t = ticks();
+    uint16_t t = ticks();
     button_history.last_leave = t;
   } else {
     button_history.last_leave = 0;
@@ -403,6 +419,8 @@ void press(uint8_t button_idx) {
 }
 
 void press_on_normal(uint8_t button_idx) {
+  uint32_t hp_tick;
+  uint32_t tap_tempo_interval;
   switch(button_idx) {
     case 0:
       current_state.func = 1;
@@ -440,8 +458,18 @@ void press_on_normal(uint8_t button_idx) {
         }
       } else {
         current_state.hid = 1;
-        if (is_multi_tap(button_idx, 2)) {
-          set_step_interval(button_history.interval_tick/16);
+        hp_tick = hp_ticks();
+        if (in_tap_tempo) {
+          tap_tempo_interval = hp_tick - tap_tempo_hp_tick;
+          if (tap_tempo_interval > TAP_TEMPO_TIMEOUT) {
+            in_tap_tempo = 0;
+          } else {
+            set_step_interval(tap_tempo_interval/16);
+            tap_tempo_hp_tick = hp_tick;
+          }
+        } else {
+          in_tap_tempo = 1;
+          tap_tempo_hp_tick = hp_tick;
         }
       }
       break;

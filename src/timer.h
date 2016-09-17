@@ -5,8 +5,12 @@
 #define CQ_TIMER_H_
 
 void timer_init();
-uint32_t ticks();
-
 extern volatile uint16_t current_wrap_count;
+
+extern uint32_t hp_ticks();
+
+inline uint16_t ticks() {
+  return current_wrap_count;
+}
 
 #endif /* CQ_TIMER_H_ */

@@ -61,7 +61,7 @@ ISR (TIMER2_OVF_vect) {
   read_knob_values();
 }
 
-uint32_t ticks() {
+uint32_t hp_ticks() {
   cli();
   uint32_t ticks = ((uint32_t)current_wrap_count * 256 + TCNT2);
   sei();

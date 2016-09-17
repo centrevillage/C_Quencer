@@ -6,7 +6,7 @@
 
 static volatile enum DisplayMode display_mode = SEQ;
 static volatile uint8_t led_count = 0;
-static volatile unsigned long last_led_disp_tick = 0;
+static volatile uint16_t last_led_disp_tick = 0;
 static uint8_t rec_led_count = 0;
 static uint8_t led_blink_count = 0;
 
@@ -202,7 +202,7 @@ void output_led() {
     }
     led_blink_count = 0;
   }
-  unsigned long duration;
+  uint16_t duration;
 
   DDRD = 0;
   PORTD &= (uint8_t)~LED_MASK;
