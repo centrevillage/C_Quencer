@@ -197,7 +197,7 @@ void output_led_on_wave_balance() {
 // use PD0 - PD5
 void output_led() {
   if (rec_mode == REC) {
-    if (led_blink_count++ < 64) {
+    if (led_blink_count++ < 16) {
       return;
     }
     led_blink_count = 0;
