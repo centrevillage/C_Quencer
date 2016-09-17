@@ -125,7 +125,7 @@ void output_osc_and_cv_on_normal(uint16_t interval_count, uint8_t delta_tick){
   // 128 pitch unit = 4096 dac value = 5 V pin out
   // 120 pitch unit = 5 * 120 / 128  = 4.68 V pin out
   // 4.68 V pin out -> analog gain x 2.17 -> 10V cv out
-  output_dac_b(cv_pitch >> 3);
+  output_dac_b((cv_pitch >> 3) + (3 << 5)); // +3 -> change 1V = 'C' to 'A'
   sei();
 }
 
@@ -136,7 +136,7 @@ void output_osc_and_cv_on_edit(uint16_t interval_count, uint8_t delta_tick){
   uint16_t current_value = pgm_read_word(&(wavetables[selected_wavetable_type1][current_table_index1]));
 
   output_dac_a(current_value);
-  output_dac_b(current_pitch1*32);
+  output_dac_b((current_pitch1 + 3)*32); // +3 -> change 1V = 'C' to 'A'
 }
 
 void reset_count_in_cycle() {
