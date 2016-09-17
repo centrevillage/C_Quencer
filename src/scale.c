@@ -51,17 +51,17 @@ char is_scale_table_complete(char scale_table_works[24]) {
 // 可能な限り均等にスケールノートをテーブルに配置
 void update_scale_table(volatile uint16_t scales[16]) {
   char scale_table_works[24]; // F0#-B0(0-5), C1-B9(6-17), C2-F2(18-23)
-  for (char i=0; i<16; ++i) {
+  for (uint8_t i=0; i<16; ++i) {
     memset(&scale_table_works, -128, sizeof(scale_table_works));
     char found = 0;
-    for (char j=0; j<12; ++j) {
+    for (uint8_t j=0; j<12; ++j) {
       if (scales[i] & (1<<j)) {
         found = 1;
-        scale_table_works[j+6] = j;
+        scale_table_works[j+6] = (char)j;
         if (j < 6) {
-          scale_table_works[j+18] = j+12;
+          scale_table_works[j+18] = (char)j+12;
         } else {
-          scale_table_works[j-6] = j-12;
+          scale_table_works[j-6] = (char)j-12;
         }
       }
     }
@@ -71,18 +71,18 @@ void update_scale_table(volatile uint16_t scales[16]) {
 
     while(!is_scale_table_complete(scale_table_works)) {
       // 各ノートについて左右どちらかに空きがあれば埋めていく
-      for (char j=0; j<24; ++j) {
+      for (uint8_t j=0; j<24; ++j) {
         if (scale_table_works[j] != -128) {
           if ((j+1)<24 && scale_table_works[j+1] == -128) {
             scale_table_works[j+1] = scale_table_works[j];
           }
-          if ((j-1)>=0 && scale_table_works[j-1] == -128) {
+          if (((char)j-1)>=0 && scale_table_works[j-1] == -128) {
             scale_table_works[j-1] = scale_table_works[j];
           }
         }
       }
     }
-    for (char j=0; j<12; ++j) {
+    for (uint8_t j=0; j<12; ++j) {
       scale_table[i][j] = scale_table_works[j+6];
     }
   }
