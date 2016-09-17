@@ -34,6 +34,7 @@ volatile uint16_t prev_values[] = {0, 0, 0, 0};
 
 volatile uint32_t tap_tempo_hp_tick = 0;
 volatile uint8_t in_tap_tempo = 0;
+volatile uint32_t tap_tempo_interval;
 
 inline void update_knob_value_inline(uint8_t i) {
   uint16_t prev_value;
@@ -420,7 +421,6 @@ void press(uint8_t button_idx) {
 
 void press_on_normal(uint8_t button_idx) {
   uint32_t hp_tick;
-  uint32_t tap_tempo_interval;
   switch(button_idx) {
     case 0:
       current_state.func = 1;
@@ -459,12 +459,11 @@ void press_on_normal(uint8_t button_idx) {
       } else {
         current_state.hid = 1;
         hp_tick = hp_ticks();
-        if (in_tap_tempo) {
+        if (in_tap_tempo == 2) {
           tap_tempo_interval = hp_tick - tap_tempo_hp_tick;
           if (tap_tempo_interval > TAP_TEMPO_TIMEOUT) {
             in_tap_tempo = 0;
           } else {
-            set_step_interval(tap_tempo_interval/16);
             tap_tempo_hp_tick = hp_tick;
           }
         } else {
@@ -507,6 +506,9 @@ void press_on_normal(uint8_t button_idx) {
       break;
     default:
       break;
+  }
+  if (button_idx != 2) {
+    in_tap_tempo = 0;
   }
   func_mode = get_func_mode();
 }
@@ -638,6 +640,16 @@ void leave(uint8_t button_idx) {
       break;
     case 2:
       current_state.hid = 0;
+      if (in_tap_tempo) {
+        if (hp_ticks() - tap_tempo_hp_tick > TAP_FUNC_DURAITON) { // TAPƒ{ƒ^ƒ“0.8•bˆÈã’·‰Ÿ‚µ
+          in_tap_tempo = 0;
+        } else {
+          if (in_tap_tempo == 2) {
+            set_step_interval(tap_tempo_interval/16);
+          }
+          in_tap_tempo = 2;
+        }
+      }
       break;
     case 3:
       if (rec_mode == REC && record_length > 7) {

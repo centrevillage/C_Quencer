@@ -33,7 +33,9 @@ enum EditMode {NORMAL, SELECT, SCALE, PATTERN};
 #define FLUTTERING_INTERVAL 3
 #define TAP_TEMPO_MIN_INTERVAL 8
 
-#define TAP_TEMPO_TIMEOUT 1048575L
+#define TAP_TEMPO_TIMEOUT 262143L
+
+#define TAP_FUNC_DURAITON 51200
 
 extern volatile enum EditMode edit_mode;
 

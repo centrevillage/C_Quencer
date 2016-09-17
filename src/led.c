@@ -242,7 +242,7 @@ void output_led() {
         display_mode = SEQ;
         output_led_on_seq();
       } else {
-        rec_led_count = 15 - (duration/4096);
+        rec_led_count = 15 - (duration/32);
         output_led_on_rec_clear();
       }
       break;
@@ -252,7 +252,7 @@ void output_led() {
         display_mode = SEQ;
         output_led_on_seq();
       } else {
-        rec_led_count = (duration/4096);
+        rec_led_count = (duration/32);
         output_led_on_rec_clear();
       }
       break;
