@@ -1,3 +1,10 @@
+Ver 0.9:
+* optimize all process
+* stabilize internal oscillator
+* overdubbable motion recording
+* 1V CV is 'A' tone
+* many bugfixes
+
 Ver 0.8:
 * add wave shaping mode (press "TAP" and then press "START")
 on wave shaping mode:
