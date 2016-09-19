@@ -26,7 +26,6 @@
 *.app
 *.i*86
 *.x86_64
-*.hex
 
 # Debug files
 *.dSYM/
@@ -40,5 +39,5 @@
 *.swp
 *.swo
 
-./src/build/*
+build/*
 tags
