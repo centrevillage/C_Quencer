@@ -7,7 +7,6 @@ extern volatile unsigned char active_seq[16];
 extern volatile uint8_t current_step;
 extern volatile uint16_t step_interval;
 extern volatile uint8_t divide_count;
-extern volatile uint8_t current_pos;
 extern volatile uint8_t active_step_gate;
 extern volatile uint8_t current_pitch1;
 extern volatile uint8_t current_pitch2;
