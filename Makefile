@@ -30,7 +30,7 @@ ifndef AVRDUDE_PROGRAMMER
 AVRDUDE_PROGRAMMER = avrisp
 endif
 ifndef AVRDUDE_PORT
-AVRDUDE_PORT = com4
+AVRDUDE_PORT = com6
 endif
 ifndef BAUDRATE
 BAUDRATE = 19200
@@ -90,6 +90,8 @@ LDFLAGS += -Wl,-Map=$(TARGET).map,--cref
 # Programming support using avrdude. Settings and variables.
 AVRDUDE_WRITE_FLASH = -U flash:w:$(TARGET).hex
 #AVRDUDE_WRITE_EEPROM = -U eeprom:w:$(TARGET).eep
+
+AVRDUDE_WRITE_FUSEBIT = -U lfuse:w:0xFF:m -U hfuse:w:0xDE:m -U efuse:w:0x05:m
 
 AVRDUDE_FLAGS = -p $(MCU) -P $(AVRDUDE_PORT) -c $(AVRDUDE_PROGRAMMER) $(AVRDUDE_CONF)
 
@@ -173,6 +175,9 @@ extcoff: $(TARGET).elf
 	@echo
 	@echo $(MSG_EXTENDED_COFF) $(TARGET).cof
 	$(COFFCONVERT) -O coff-ext-avr $< $(TARGET).cof
+
+fuse:
+	$(AVRDUDE) $(AVRDUDE_FLAGS) $(AVRDUDE_WRITE_FUSEBIT) -b $(BAUDRATE) 
 
 # Program the device.  
 program: $(TARGET).hex $(TARGET).eep
