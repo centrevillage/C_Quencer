@@ -1,3 +1,9 @@
+Ver 0.9.2:
+	bugfix: OSC B PITCH(quantized) is wrong high-pitch
+
+Ver 0.9.1:
+	switch off phase reset on change pitch duration
+
 Ver 0.9:
 * optimize all process
 * stabilize internal oscillator
