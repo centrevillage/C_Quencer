@@ -256,7 +256,7 @@ void update_pitch() {
 
   current_pitch1 = quantize_pitch(tmp_value);
   if (pitch_duration_quantized) {
-    current_pitch2 = quantize_pitch(current_pitch1 + pitch_duration);
+    current_pitch2 = quantize_pitch(tmp_value + pitch_duration);
   } else {
     uint8_t pitch_tmp = current_pitch1 + pitch_duration;
     if (pitch_tmp > 119) {
