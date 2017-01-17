@@ -23,6 +23,8 @@ void setup_pins() {
   // switch with pullup
   PORTC = _BV(5);
 
+  PORTB |= _BV(2); // gate off
+
   // pin interrupt for PC and PD ports
   PCICR = _BV(PCIE1) | _BV(PCIE2);
   PCMSK1 = _BV(PCINT12) | _BV(PCINT13);
