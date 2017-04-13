@@ -75,9 +75,9 @@ inline void loop() {
   uint8_t interval_count = current_count - prev_count;
   if (interval_count > 0 ) {
     div16_count_buf += interval_count;
-    uint8_t div16_interval = interval_count / 8;
-    div16_count_buf -= div16_interval * 8;
-    output_osc_and_cv(interval_count, div16_interval);
+    uint8_t div8_interval = div16_count_buf / 8;
+    div16_count_buf -= div8_interval * 8;
+    output_osc_and_cv(interval_count, div8_interval);
     prev_count = current_count;
   }
   output_led();
