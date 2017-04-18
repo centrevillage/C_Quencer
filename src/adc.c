@@ -6,7 +6,7 @@ void adc_init() {
   ADMUX =  (1<<REFS0) | (1<<ADLAR); // only use 8-bit (ADCH)
   //ADCSRA = (1<<ADPS2) | (1<<ADPS0);  // 16MHz / 32 = 500 kHz
   //ADCSRA = (1<<ADPS2) | (1<<ADPS1);  // 16MHz / 64 = 250 kHz
-  ADCSRA = (1<<ADPS2) | (1<<ADPS1) | (1<<ADPS0);  // 16MHz / 64 = 125 kHz
+  ADCSRA = (1<<ADPS2) | (1<<ADPS1) | (1<<ADPS0);  // 16MHz / 128 = 125 kHz
   ADCSRA |= (1<<ADEN);                  // ADC enable
   // dummy readout
   ADCSRA |= (1<<ADSC);                  // single readout
