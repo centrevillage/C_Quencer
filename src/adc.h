@@ -3,13 +3,10 @@
 #ifndef CQ_ADC_H_
 #define CQ_ADC_H_
 
-void adc_init();
+typedef void (*AdcAsyncReadCallback)(uint8_t, uint8_t);
 
-inline uint8_t adc_read(uint8_t pin) {
-  ADMUX = (ADMUX & 0xF0) | pin;
-  ADCSRA |= (1<<ADSC);
-  loop_until_bit_is_clear(ADCSRA, ADSC);
-  return ADCH;
-}
+void adc_init();
+uint8_t adc_async_read(uint8_t pin, AdcAsyncReadCallback callback);
+uint8_t adc_async_process();
 
 #endif /* CQ_ADC_H_ */

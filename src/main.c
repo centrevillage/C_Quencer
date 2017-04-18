@@ -43,9 +43,6 @@ void setup() {
   spi_init();
 
   load_preset();
-
-  read_knob_values();
-  update_knob_values();
 }
 
 inline void update_knob_values_on_stop() {

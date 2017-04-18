@@ -26,6 +26,7 @@ enum EditMode {NORMAL, SELECT, SCALE, PATTERN};
 #define CHG_VAL_FLAG_WAVE_BALANCE 14
 #define CHG_VAL_FLAG_WAVE_PITCH_DURATION 15
 
+#define KNOB_COUNT 4
 #define KNOB_VALUES_SIZE 8
 #define RECORDED_VALUES_SIZE 64
 
@@ -116,15 +117,6 @@ extern volatile uint8_t knob_values[4][KNOB_VALUES_SIZE];
 extern volatile uint8_t current_knob_idx;
 extern volatile uint8_t current_knob_value_idx;
 
-inline void read_knob_values() {
-  knob_values[current_knob_idx][current_knob_value_idx] = 255 - adc_read(current_knob_idx);
-  ++current_knob_idx;
-  if (current_knob_idx > 3) {
-    current_knob_idx = 0;
-    current_knob_value_idx = (current_knob_value_idx + 1) % KNOB_VALUES_SIZE;
-  }
-}
-
 void update_knob_values();
 void set_current_value(uint8_t value, uint8_t knob_idx);
 void set_current_value_on_normal(uint8_t value, uint8_t knob_idx);
@@ -149,5 +141,7 @@ void enter_edit_select_mode();
 void leave_edit_select_mode();
 void enter_edit_scale_mode();
 void enter_edit_pattern_mode();
+
+void read_knob_values_async();
 
 #endif /* CQ_INPUT_H_ */
