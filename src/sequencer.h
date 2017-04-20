@@ -23,6 +23,7 @@ void update_step_time();
 void start_trigger();
 void start_seq();
 void stop_seq();
+void sync_clock();
 
 #endif /* CQ_SEQUENCER_H_ */
 

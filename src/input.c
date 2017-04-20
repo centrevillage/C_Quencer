@@ -199,8 +199,8 @@ void set_current_value_on_normal(uint8_t value, uint8_t knob_idx){
           set_led_count((value >> 3) + 1);
           break;
         case STABILITY:
-          no_rec_values.v.int_clock_sync_to_ext = value >> 4;
-          set_led_count((value >> 4) + 1);
+          no_rec_values.v.int_clock_sync_to_ext = value >> 7;
+          set_led_count(no_rec_values.v.int_clock_sync_to_ext + 1);
           break;
       }
       break;
@@ -687,10 +687,14 @@ ISR(PCINT2_vect) {
 ISR(PCINT1_vect) {
   if(bit_is_clear(PINC,4)) {
     if (edit_mode == NORMAL && (TCNT1 == 0 || TCNT1 > 50)) {
-      if (!current_state.start) {
-        start_trigger();
+      if (no_rec_values.v.int_clock_sync_to_ext) {
+        sync_clock();
+      } else {
+        if (!current_state.start) {
+          start_trigger();
+        }
+        step_seq();
       }
-      step_seq();
     }
   }
   if (bit_is_clear(PINC, 5)) {
