@@ -357,7 +357,7 @@ int16_t prev_diff_count = 0;
 void sync_clock() {
   uint32_t ext_clock_tick = hp_ticks() / 4;
   uint32_t ext_clock_interval_32  = ext_clock_tick - ext_clock_prev_tick;
-  if (ext_clock_interval_32 < 0x7FFF) {
+  if (ext_clock_interval_32 < 0x7FFF && ext_clock_interval_32 > 0xFF) {
     uint16_t ext_clock_interval  = ext_clock_interval_32;
     uint16_t int_clock_count = TCNT1;
     int16_t diff_count = int_clock_count % ext_clock_interval;
