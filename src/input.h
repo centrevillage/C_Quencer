@@ -43,7 +43,7 @@ extern volatile enum EditMode edit_mode;
 enum RecMode {STOP, REC, PLAY};
 extern volatile enum RecMode rec_mode;
 
-enum FuncMode {NONE, FUNC, HID, WAVE_SHAPE};
+enum FuncMode {NONE, FUNC, HID, WAVE_SHAPE, STABILITY};
 extern volatile enum FuncMode func_mode;
 
 typedef struct {
@@ -60,7 +60,7 @@ enum FuncMode get_func_mode();
 // 0x11111111 -> BAG(F#)FEDC
 // scale value is 8bit boolean field.
 typedef union {
-  uint8_t values[12];
+  uint8_t values[16];
   struct {
     uint8_t step_fill;
     uint8_t step_length;
@@ -82,6 +82,18 @@ typedef union {
 } ControllerValue;
 
 extern volatile ControllerValue current_values;
+
+typedef struct {
+  uint8_t values[4];
+  struct {
+    uint8_t int_clock_instability;
+    uint8_t int_clock_sync_to_ext;
+    uint8_t pitch_vibrato;
+    uint8_t pitch_overshoot;
+  } v;
+} NoRecValue;
+
+extern volatile NoRecValue no_rec_values;
 
 typedef struct {
   enum FuncMode mode; 

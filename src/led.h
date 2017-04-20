@@ -20,7 +20,8 @@ enum DisplayMode {
   EDIT_PATTERN_SELECT,
   SELECT_PRESET,
   WAVE_SHAPE_SELECT,
-  WAVE_SHAPE_BALANCE
+  WAVE_SHAPE_BALANCE,
+  LEFT_8_DOT_RIGHT_8_VAL
 };
 
 void output_led_on_seq();
@@ -36,8 +37,10 @@ void output_led_on_edit_pattern_select();
 void output_led_on_select_preset();
 void output_led_on_wave_select();
 void output_led_on_wave_balance();
+void output_led_on_left_8_right_8();
 void output_led();
 void set_display_mode(enum DisplayMode mode);
 void set_led_count(uint8_t led_count);
+void set_disp_left_8_dot_right_8_val(uint8_t led_count);
 
 #endif /* CQ_LED_H_ */

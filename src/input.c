@@ -7,6 +7,7 @@
 #include "adc.h"
 
 volatile ControllerValue current_values;
+volatile NoRecValue no_rec_values;
 
 volatile enum EditMode edit_mode = NORMAL;
 volatile enum RecMode  rec_mode = STOP;
@@ -36,6 +37,8 @@ volatile uint16_t prev_values[] = {0, 0, 0, 0};
 volatile uint32_t tap_tempo_hp_tick = 0;
 volatile uint8_t in_tap_tempo = 0;
 volatile uint32_t tap_tempo_interval;
+
+void leave_on_rec_mode();
 
 inline void update_knob_value_inline(uint8_t i) {
   uint16_t prev_value;
@@ -148,7 +151,7 @@ void set_current_value(uint8_t value, uint8_t knob_idx) {
 void set_current_value_on_normal(uint8_t value, uint8_t knob_idx){
   uint8_t tmp_value;
   switch (knob_idx) {
-    case 0: // fill / len / slide / wave select
+    case 0: // fill / len / slide / wave select / clock instability
       switch (func_mode) {
         case NONE:
           current_values.v.step_fill = value >> 4;
@@ -168,9 +171,13 @@ void set_current_value_on_normal(uint8_t value, uint8_t knob_idx){
           changed_value_flags |= 1<<CHG_VAL_FLAG_WAVE_SELECT;
           set_display_mode(WAVE_SHAPE_SELECT);
           break;
+        case STABILITY:
+          no_rec_values.v.int_clock_instability = value >> 2;
+          set_disp_left_8_dot_right_8_val(no_rec_values.v.int_clock_instability);
+          break;
       }
       break;
-    case 1: // rot / rand / swing / wave phase
+    case 1: // rot / rand / swing / wave phase / clock sync
       switch (func_mode) {
         case NONE:
           current_values.v.step_rot = value >> 3;
@@ -191,9 +198,13 @@ void set_current_value_on_normal(uint8_t value, uint8_t knob_idx){
           changed_value_flags |= 1<<CHG_VAL_FLAG_WAVE_PHASE;
           set_led_count((value >> 3) + 1);
           break;
+        case STABILITY:
+          no_rec_values.v.int_clock_sync_to_ext = value >> 4;
+          set_led_count((value >> 4) + 1);
+          break;
       }
       break;
-    case 2: // scale select / transpose / scale pattern random / wave balance
+    case 2: // scale select / transpose / scale pattern random / wave balance / pitch vibrato
       switch (func_mode) {
         case NONE:
           current_values.v.scale_select = value >> 4;
@@ -222,9 +233,13 @@ void set_current_value_on_normal(uint8_t value, uint8_t knob_idx){
           changed_value_flags |= 1<<CHG_VAL_FLAG_WAVE_BALANCE;
           set_display_mode(WAVE_SHAPE_BALANCE);
           break;
+        case STABILITY:
+          no_rec_values.v.pitch_vibrato = value >> 2;
+          set_disp_left_8_dot_right_8_val(value);
+          break;
       }
       break;
-    case 3: // scale pattern / scale range / scale pattern random / wave pitch duration
+    case 3: // scale pattern / scale range / scale pattern random / wave pitch duration / pitch overshoot
       switch (func_mode) {
         case NONE:
           current_values.v.scale_pattern = value >> 4;
@@ -245,6 +260,10 @@ void set_current_value_on_normal(uint8_t value, uint8_t knob_idx){
           current_values.v.wave_pitch_duration = value >> 3;
           changed_value_flags |= 1<<CHG_VAL_FLAG_WAVE_PITCH_DURATION;
           set_led_count((value >> 3) + 1);
+          break;
+        case STABILITY:
+          no_rec_values.v.pitch_overshoot = value >> 2;
+          set_disp_left_8_dot_right_8_val(no_rec_values.v.pitch_overshoot);
           break;
       }
       break;
@@ -343,7 +362,11 @@ void set_current_value_on_pattern(uint8_t value, uint8_t knob_idx){
 
 enum FuncMode get_func_mode() {
   if (current_state.wave_shape) {
-    return WAVE_SHAPE;
+    if (current_state.func) {
+      return STABILITY;
+    } else {
+      return WAVE_SHAPE;
+    }
   } else if (current_state.hid) {
     return HID;
   } else if (current_state.func) {

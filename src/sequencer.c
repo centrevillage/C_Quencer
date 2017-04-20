@@ -9,6 +9,7 @@
 #include "dac.h"
 #include "eeprom.h"
 #include "variables.h"
+#include "wavetable.h"
 
 volatile uint8_t divide_idx = 1;
 volatile uint8_t pitch_duration_quantized = 0;
@@ -160,17 +161,36 @@ void start_gate_timer() {
   active_step_gate = 1;
 }
 
+uint16_t step_time_count_diff = 0;
+uint16_t clock_modulation_current_index = 0;
 void update_step_time() {
+  uint16_t step_interval_tmp = step_interval;
   if (current_values.v.swing > 0) {
-    uint16_t offset_interval = ((long)step_interval * current_values.v.swing) / 255;
+    uint16_t offset_interval = ((long)step_interval_tmp * current_values.v.swing) / 255;
     if (current_step % 2 == 0) {
-      OCR1A = step_interval + offset_interval;
+      step_interval_tmp += offset_interval;
     } else {
-      OCR1A = step_interval - offset_interval;
+      step_interval_tmp -= offset_interval;
     }
-  } else {
-    OCR1A = step_interval;
   }
+  if (no_rec_values.v.int_clock_instability) {
+    uint16_t prev_step_interval = OCR1A + step_time_count_diff;
+    uint8_t speed = no_rec_values.v.int_clock_instability >> 3;
+    uint8_t speed_divide = 7 + (7 - speed);
+    uint8_t power = (no_rec_values.v.int_clock_instability & 0x07);
+    uint8_t power_divide = (7 - power);
+    uint16_t index_diff = prev_step_interval >> speed_divide;
+    step_time_count_diff = prev_step_interval - (index_diff << speed_divide);
+    if (step_time_count_diff > 4096) {
+      step_time_count_diff = 4096;
+    }
+    clock_modulation_current_index = (clock_modulation_current_index + index_diff) % WAVETABLE_SIZE; 
+    step_interval_tmp += ((sine_wave(clock_modulation_current_index)) >> power_divide) - (2048 >> power_divide);
+    if (step_interval_tmp < 256) {
+      step_interval_tmp = 256;
+    }
+  }
+  OCR1A = step_interval_tmp;
 }
 
 void set_divide(uint8_t divide) {

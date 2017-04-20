@@ -192,6 +192,13 @@ void output_led_on_wave_balance() {
   }
 }
 
+void output_led_on_left_8_right_8() {
+  if (g_led_i <= (led_count & 0x07) || g_led_i == ((led_count >> 3) + 8)) {
+    PORTD |= pgm_read_byte(&(led_idx_to_port_and_ddr[g_led_i][0]));
+    DDRD   = pgm_read_byte(&(led_idx_to_port_and_ddr[g_led_i][1]));
+  }
+}
+
 // led_task
 // charlieplexing
 // use PD0 - PD5
@@ -315,6 +322,15 @@ void output_led() {
         output_led_on_wave_balance();
       }
       break;
+    case LEFT_8_DOT_RIGHT_8_VAL:
+      duration = ticks() - last_led_disp_tick;
+      if (duration > MAX_DISPLAY_TICK_FOR_VALUE) {
+        display_mode = SEQ;
+        output_led_on_seq();
+      } else {
+        output_led_on_left_8_right_8();
+      }
+      break;
     default:
       break;
   }
@@ -331,6 +347,12 @@ void set_display_mode(enum DisplayMode mode) {
 
 void set_led_count(uint8_t count /* value: 1..16 */) {
   display_mode = COUNT;
+  led_count = count;
+  last_led_disp_tick = ticks();
+}
+
+void set_disp_left_8_dot_right_8_val(uint8_t count) {
+  display_mode = LEFT_8_DOT_RIGHT_8_VAL;
   led_count = count;
   last_led_disp_tick = ticks();
 }
