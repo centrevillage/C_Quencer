@@ -66,81 +66,56 @@ inline void output_osc_and_cv_on_normal(uint8_t interval_count, uint8_t delta_ti
     phase_shift2 = wave_phase_shift * (WAVETABLE_SIZE / 16);
   }
 
-  uint16_t cv_pitch = current_pitch1_dec;
+  uint16_t cycle_length1 = MAX_CYCLE_LENGTH;
+  uint16_t cycle_length2 = MAX_CYCLE_LENGTH;
+
+  uint16_t cv_pitch;
+  uint8_t slide_oct1;
+  uint16_t slide_note1;
 
   if (slide_speed > 0 && slide_pitch1 != current_pitch1_dec) { // pitch slide
-    uint16_t cycle_length1;
-    uint16_t cycle_length2;
     if (slide_type) {
       // replay cycle length bug :)
       cycle_length1 = pgm_read_word(&(pitch_to_cycle[current_note_num1]));
-      cycle_length2 = pgm_read_word(&(pitch_to_cycle[current_note_num2]));
-    } else {
-      cycle_length1 = MAX_CYCLE_LENGTH;
-      cycle_length2 = MAX_CYCLE_LENGTH;
     }
 
     slide_pitch1 = ((uint32_t)slide_speed * current_pitch1_dec + (uint32_t)(256 - slide_speed) * slide_pitch1 + 128) / 256;
     cv_pitch = slide_pitch1;
-    uint8_t slide_oct1 = slide_pitch1 / (12*256);
-    uint16_t slide_note1 = slide_pitch1 % (12*256);
-    uint32_t val1 = pgm_read_word(&(cycle_speed_table[slide_note1]));
-    slide_buf_value1 += (val1 * interval_count) << (slide_oct1 + shift_oct);
-    wave1_count_in_cycle = (wave1_count_in_cycle + (slide_buf_value1 >> 12)) % MAX_CYCLE_LENGTH;
-    slide_buf_value1 &= 0x00000FFF;
-    current_table_index1 = (uint32_t)wave1_count_in_cycle * WAVETABLE_SIZE / cycle_length1;
-
-    if (current_values.v.wave_pitch_duration) {
-
-      slide_pitch2 = ((uint32_t)slide_speed * current_pitch2_dec + (uint32_t)(256 - slide_speed) * slide_pitch2 + 128) / 256;
-      uint8_t slide_oct2 = slide_pitch2 / (12*256);
-      uint16_t slide_note2 = slide_pitch2 % (12*256);
-      uint32_t val2 = pgm_read_word(&(cycle_speed_table[slide_note2]));
-      slide_buf_value2 += (val2 * interval_count) << (slide_oct2 + shift_oct);
-      wave2_count_in_cycle = (wave2_count_in_cycle + (slide_buf_value2 >> 12)) % MAX_CYCLE_LENGTH;
-      slide_buf_value2 &= 0x00000FFF;
-      current_table_index2 = (((uint32_t)wave2_count_in_cycle * WAVETABLE_SIZE / cycle_length2) + phase_shift2) % WAVETABLE_SIZE;
-    } else {
-      current_table_index2 = (current_table_index1 + phase_shift2) % WAVETABLE_SIZE;
-    }
+    slide_oct1 = slide_pitch1 / (12*256);
+    slide_note1 = slide_pitch1 % (12*256);
   } else {
-    uint8_t wave1_oct = current_oct1 + shift_oct;
-    uint8_t wave2_oct = current_oct2 + shift_oct;
-    uint16_t wave1_count_diff = (uint16_t)interval_count << wave1_oct;
-    uint16_t wave2_count_diff = (uint16_t)interval_count << wave2_oct;
-    if (no_rec_values.v.pitch_vibrato) {
-      uint8_t vibrato_env = no_rec_values.v.pitch_vibrato & 0x10;
-      if (vibrato_env) {
-        uint8_t env_speed = no_rec_values.v.pitch_vibrato & 0x0F;
-        uint16_t last_step_duration_ticks = get_last_step_duration_ticks();
-        if (last_step_duration_ticks > 255) {
-          last_step_duration_ticks = 255;
-        }
-        uint16_t vibrato_rate = (last_step_duration_ticks * env_speed) >> 4;
-        vibrato_index = (vibrato_index + (delta_tick * (vibrato_rate + 1))) % WAVETABLE_SIZE;
-      } else {
-        uint8_t vibrato_rate = no_rec_values.v.pitch_vibrato & 0x0F;
-        vibrato_index = (vibrato_index + (delta_tick * vibrato_rate)) % WAVETABLE_SIZE;
+    cv_pitch = current_pitch1_dec;
+    slide_oct1 = current_oct1;
+    slide_note1 = current_note_num1 * 256;
+  }
+  uint32_t val1 = pgm_read_word(&(cycle_speed_table[slide_note1]));
+  slide_buf_value1 += (val1 * interval_count) << (slide_oct1 + shift_oct);
+  wave1_count_in_cycle = (wave1_count_in_cycle + (slide_buf_value1 >> 12)) % MAX_CYCLE_LENGTH;
+  slide_buf_value1 &= 0x00000FFF;
+  current_table_index1 = (uint32_t)wave1_count_in_cycle * WAVETABLE_SIZE / cycle_length1;
+
+  if (current_values.v.wave_pitch_duration) {
+
+    uint8_t slide_oct2;
+    uint16_t slide_note2;
+    if (slide_speed > 0 && slide_pitch2 != current_pitch2_dec) { // pitch slide
+      if (slide_type) {
+        cycle_length2 = pgm_read_word(&(pitch_to_cycle[current_note_num2]));
       }
-      uint16_t sine_wave_value = sine_wave(vibrato_index);
-      int8_t vibrato_mod1 = (sine_wave_value >> (9 - wave1_oct)) - (2048 >> (9 - wave1_oct));
-      int8_t vibrato_mod2 = (sine_wave_value >> (9 - wave2_oct)) - (2048 >> (9 - wave1_oct));
-      wave1_count_diff += vibrato_mod1;
-      wave2_count_diff += vibrato_mod2;
-      cv_pitch += (sine_wave_value >> 4) - 128;
-    }
-    uint16_t cycle_length1 = pgm_read_word(&(pitch_to_cycle[current_note_num1]));
-
-    wave1_count_in_cycle = (wave1_count_in_cycle + wave1_count_diff) % cycle_length1;
-    current_table_index1 = (uint32_t)wave1_count_in_cycle * WAVETABLE_SIZE / cycle_length1;
-
-    if (current_values.v.wave_pitch_duration) {
-      uint16_t cycle_length2 = pgm_read_word(&(pitch_to_cycle[current_note_num2]));
-      wave2_count_in_cycle = (wave2_count_in_cycle + wave2_count_diff) % cycle_length2;
-      current_table_index2 = (((uint32_t)wave2_count_in_cycle * WAVETABLE_SIZE / cycle_length2) + phase_shift2) % WAVETABLE_SIZE;
+      slide_pitch2 = ((uint32_t)slide_speed * current_pitch2_dec + (uint32_t)(256 - slide_speed) * slide_pitch2 + 128) / 256;
+      slide_oct2 = slide_pitch2 / (12*256);
+      slide_note2 = slide_pitch2 % (12*256);
     } else {
-      current_table_index2 = (current_table_index1 + phase_shift2) % WAVETABLE_SIZE;
+      slide_oct2 = current_oct2;
+      slide_note2 = current_note_num2 * 256;
     }
+    uint32_t val2 = pgm_read_word(&(cycle_speed_table[slide_note2]));
+    slide_buf_value2 += (val2 * interval_count) << (slide_oct2 + shift_oct);
+    wave2_count_in_cycle = (wave2_count_in_cycle + (slide_buf_value2 >> 12)) % MAX_CYCLE_LENGTH;
+    slide_buf_value2 &= 0x00000FFF;
+    current_table_index2 = (((uint32_t)wave2_count_in_cycle * WAVETABLE_SIZE / cycle_length2) + phase_shift2) % WAVETABLE_SIZE;
+  } else {
+    current_table_index2 = (current_table_index1 + phase_shift2) % WAVETABLE_SIZE;
   }
 
   uint16_t wave1_value = pgm_read_word(&(wavetables[selected_wavetable_type1][current_table_index1]));
