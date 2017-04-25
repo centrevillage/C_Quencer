@@ -372,6 +372,9 @@ void sync_clock() {
       phase_adj = diff_count;
     }
     step_interval += (diff_interval >> 2) + phase_adj / 4;
+    if (step_interval < 0x7F) {
+      step_interval = 0x7F;
+    }
     prev_diff_count = diff_count;
   }
   ext_clock_prev_tick = ext_clock_tick;

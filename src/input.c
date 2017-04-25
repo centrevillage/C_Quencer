@@ -638,7 +638,7 @@ void leave(uint8_t button_idx) {
     case 2:
       current_state.hid = 0;
       if (in_tap_tempo) {
-        if (hp_ticks() - tap_tempo_hp_tick > TAP_FUNC_DURAITON) { // TAPƒ{ƒ^ƒ“0.8•bˆÈã’·‰Ÿ‚µ
+        if (hp_ticks() - tap_tempo_hp_tick > TAP_FUNC_DURAITON) { // TAPãƒœã‚¿ãƒ³0.8ç§’ä»¥ä¸Šé•·æŠ¼ã—
           in_tap_tempo = 0;
         } else {
           if (in_tap_tempo == 2) {
