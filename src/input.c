@@ -162,7 +162,7 @@ void set_current_value_on_normal(uint8_t value, uint8_t knob_idx){
           changed_value_flags |= 1<<CHG_VAL_FLAG_STEP_LENGTH;
           break;
         case HID:
-          current_values.v.slide = value >> 3;
+          current_values.v.slide = value >> 4;
           changed_value_flags |= 1<<CHG_VAL_FLAG_SLIDE;
           set_led_count(current_values.v.slide + 1);
           break;

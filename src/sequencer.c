@@ -327,8 +327,7 @@ void update_oct_note() {
 }
 
 void update_slide() {
-  uint8_t slide_val = current_values.v.slide & 0x0F;
-  slide_type = !!(current_values.v.slide >> 4);
+  uint8_t slide_val = current_values.v.slide;
   if (prev_pitch1 != current_pitch1 && active_seq[current_step] && prev_pitch1 < 120 && slide_val > 0) {
     slide_speed = (16 - slide_val);
     slide_pitch1 = prev_pitch1 << 8;

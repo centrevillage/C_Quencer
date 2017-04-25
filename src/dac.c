@@ -71,11 +71,6 @@ inline void output_osc_and_cv_on_normal(uint8_t interval_count, uint8_t delta_ti
   uint16_t slide_note1;
 
   if (slide_speed > 0 && slide_pitch1 != current_pitch1_dec) { // pitch slide
-    //if (slide_type) {
-    //  // replay cycle length bug :)
-    //  cycle_length1 = pgm_read_word(&(pitch_to_cycle[current_note_num1]));
-    //}
-
     slide_pitch1 = ((uint32_t)slide_speed * current_pitch1_dec + (uint32_t)(256 - slide_speed) * slide_pitch1 + 128) / 256;
     cv_pitch = slide_pitch1;
     slide_oct1 = slide_pitch1 / (12*256);
@@ -96,9 +91,6 @@ inline void output_osc_and_cv_on_normal(uint8_t interval_count, uint8_t delta_ti
     uint8_t slide_oct2;
     uint16_t slide_note2;
     if (slide_speed > 0 && slide_pitch2 != current_pitch2_dec) { // pitch slide
-      //if (slide_type) {
-      //  cycle_length2 = pgm_read_word(&(pitch_to_cycle[current_note_num2]));
-      //}
       slide_pitch2 = ((uint32_t)slide_speed * current_pitch2_dec + (uint32_t)(256 - slide_speed) * slide_pitch2 + 128) / 256;
       slide_oct2 = slide_pitch2 / (12*256);
       slide_note2 = slide_pitch2 % (12*256);
