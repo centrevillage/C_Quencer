@@ -2,7 +2,6 @@
 #include "input.h"
 #include "variables.h"
 #include "wavetable.h"
-#include "pitch_cycle.h"
 #include "cycle_speed.h"
 
 #include <avr/pgmspace.h>
@@ -122,9 +121,11 @@ inline void output_osc_and_cv_on_normal(uint8_t interval_count, uint8_t delta_ti
 }
 
 inline void output_osc_and_cv_on_edit(uint8_t interval_count, uint8_t delta_tick){
-  uint16_t cycle_length1 = pgm_read_word(&(pitch_to_cycle[current_note_num1]));
-  wave1_count_in_cycle = (wave1_count_in_cycle + ((uint16_t)interval_count << current_oct1)) % cycle_length1;
-  current_table_index1 = (uint32_t)wave1_count_in_cycle * WAVETABLE_SIZE / cycle_length1;
+  uint32_t val1 = pgm_read_word(&(cycle_speed_table[current_note_num1 * 256]));
+  slide_buf_value1 += (val1 * interval_count) << (current_oct1 + shift_oct);
+  wave1_count_in_cycle += (uint16_t)(slide_buf_value1 >> 12);
+  slide_buf_value1 &= 0x00000FFF;
+  current_table_index1 = ((uint32_t)wave1_count_in_cycle * WAVETABLE_SIZE) >> 16;
   uint16_t current_value = pgm_read_word(&(wavetables[selected_wavetable_type1][current_table_index1]));
 
   output_dac_a(current_value);
