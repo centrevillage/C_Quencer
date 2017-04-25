@@ -17,10 +17,17 @@ volatile uint8_t pitch_duration_quantized = 0;
 static uint8_t _step = 0;
 static uint8_t seq_start_shift = 0;
 
+void step_seq_on_normal();
+void step_seq_on_edit_scale();
+void step_seq_on_edit_pattern();
+
+inline void count_last_step_duration();
+
 void step_seq() {
   switch(edit_mode) {
     case NORMAL:
       step_seq_on_normal();
+      count_last_step_duration();
       break;
     case SCALE:
       step_seq_on_edit_scale();
@@ -118,6 +125,22 @@ void step_seq_on_edit_pattern(){
   start_gate_timer();
   current_test_pos = (current_test_pos+1) % 16;
   sei();
+}
+
+uint16_t last_step_duration = 0;
+void count_last_step_duration() {
+  if (active_seq[current_step] && divide_idx == 1) {
+    last_step_duration = 0;
+  } else {
+    if (last_step_duration < 0x7FFF) {
+      uint16_t step_interval_quantized = (step_interval >> 8) + 1;
+      last_step_duration += step_interval_quantized;
+    }
+  }
+}
+
+uint16_t get_last_step_duration_ticks() {
+  return (uint16_t)last_step_duration + (TCNT1 >> 8);
 }
 
 // trig in when stop sequence
@@ -355,6 +378,7 @@ void update_wave_shape() {
 volatile uint32_t ext_clock_prev_tick = 0;
 int16_t prev_diff_count = 0;
 void sync_clock() {
+  cli();
   uint32_t ext_clock_tick = hp_ticks() / 4;
   uint32_t ext_clock_interval_32  = ext_clock_tick - ext_clock_prev_tick;
   if (ext_clock_interval_32 < 0x7FFF && ext_clock_interval_32 > 0xFF) {
@@ -378,4 +402,5 @@ void sync_clock() {
     prev_diff_count = diff_count;
   }
   ext_clock_prev_tick = ext_clock_tick;
+  sei();
 }

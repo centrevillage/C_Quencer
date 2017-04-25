@@ -234,8 +234,8 @@ void set_current_value_on_normal(uint8_t value, uint8_t knob_idx){
           set_display_mode(WAVE_SHAPE_BALANCE);
           break;
         case STABILITY:
-          no_rec_values.v.pitch_vibrato = value >> 2;
-          set_disp_left_8_dot_right_8_val(value);
+          no_rec_values.v.pitch_vibrato = value >> 3;
+          set_led_count(no_rec_values.v.pitch_vibrato + 1);
           break;
       }
       break;

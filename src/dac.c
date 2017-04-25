@@ -44,6 +44,7 @@ volatile uint16_t wave2_count_in_cycle = 0;
 volatile uint16_t current_table_index1 = 0;
 volatile uint16_t current_table_index2 = 0;
 const uint8_t shift_oct = 0;
+volatile uint16_t vibrato_index = 0;
 inline void output_osc_and_cv_on_normal(uint8_t interval_count, uint8_t delta_tick){
   cli();
   uint16_t cv_pitch = current_pitch1_dec;
@@ -68,8 +69,33 @@ inline void output_osc_and_cv_on_normal(uint8_t interval_count, uint8_t delta_ti
     slide_buf_value1 &= 0x00000FFF;
     slide_buf_value2 &= 0x00000FFF;
   } else {
-    wave1_count_in_cycle = (wave1_count_in_cycle + ((uint16_t)interval_count << (current_oct1 + shift_oct))) % cycle_length1;
-    wave2_count_in_cycle = (wave2_count_in_cycle + ((uint16_t)interval_count << (current_oct2 + shift_oct))) % cycle_length2;
+    uint8_t wave1_oct = current_oct1 + shift_oct;
+    uint8_t wave2_oct = current_oct2 + shift_oct;
+    uint16_t wave1_count_diff = (uint16_t)interval_count << wave1_oct;
+    uint16_t wave2_count_diff = (uint16_t)interval_count << wave2_oct;
+    if (no_rec_values.v.pitch_vibrato) {
+      uint8_t vibrato_env = no_rec_values.v.pitch_vibrato & 0x10;
+      if (vibrato_env) {
+        uint8_t env_speed = no_rec_values.v.pitch_vibrato & 0x0F;
+        uint16_t last_step_duration_ticks = get_last_step_duration_ticks();
+        if (last_step_duration_ticks > 255) {
+          last_step_duration_ticks = 255;
+        }
+        uint16_t vibrato_rate = (last_step_duration_ticks * env_speed) >> 4;
+        vibrato_index = (vibrato_index + (delta_tick * (vibrato_rate + 1))) % WAVETABLE_SIZE;
+      } else {
+        uint8_t vibrato_rate = no_rec_values.v.pitch_vibrato & 0x0F;
+        vibrato_index = (vibrato_index + (delta_tick * vibrato_rate)) % WAVETABLE_SIZE;
+      }
+      uint16_t sine_wave_value = sine_wave(vibrato_index);
+      int8_t vibrato_mod1 = (sine_wave_value >> (9 - wave1_oct)) - (2048 >> (9 - wave1_oct));
+      int8_t vibrato_mod2 = (sine_wave_value >> (9 - wave2_oct)) - (2048 >> (9 - wave1_oct));
+      wave1_count_diff += vibrato_mod1;
+      wave2_count_diff += vibrato_mod2;
+      cv_pitch += (sine_wave_value >> 4) - 128;
+    }
+    wave1_count_in_cycle = (wave1_count_in_cycle + wave1_count_diff) % cycle_length1;
+    wave2_count_in_cycle = (wave2_count_in_cycle + wave2_count_diff) % cycle_length2;
   }
 
   current_table_index1 = (uint32_t)wave1_count_in_cycle * WAVETABLE_SIZE / cycle_length1;
