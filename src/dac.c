@@ -69,22 +69,6 @@ inline void output_osc_and_cv_on_normal(uint8_t interval_count, uint8_t delta_ti
   uint16_t cv_pitch = current_pitch1_dec;
 
   if (slide_speed > 0 && slide_pitch1 != current_pitch1_dec) { // pitch slide
-    slide_pitch1 = ((uint32_t)slide_speed * current_pitch1_dec + (uint32_t)(256 - slide_speed) * slide_pitch1 + 128) / 256;
-    slide_pitch2 = ((uint32_t)slide_speed * current_pitch2_dec + (uint32_t)(256 - slide_speed) * slide_pitch2 + 128) / 256;
-    cv_pitch = slide_pitch1;
-    uint8_t slide_oct1 = slide_pitch1 / (12*256);
-    uint16_t slide_note1 = slide_pitch1 % (12*256);
-    uint8_t slide_oct2 = slide_pitch2 / (12*256);
-    uint16_t slide_note2 = slide_pitch2 % (12*256);
-    uint32_t val1 = pgm_read_word(&(cycle_speed_table[slide_note1]));
-    uint32_t val2 = pgm_read_word(&(cycle_speed_table[slide_note2]));
-    slide_buf_value1 += (val1 * interval_count) << (slide_oct1 + shift_oct);
-    slide_buf_value2 += (val2 * interval_count) << (slide_oct2 + shift_oct);
-    wave1_count_in_cycle = (wave1_count_in_cycle + (slide_buf_value1 >> 12)) % MAX_CYCLE_LENGTH;
-    wave2_count_in_cycle = (wave2_count_in_cycle + (slide_buf_value2 >> 12)) % MAX_CYCLE_LENGTH;
-    slide_buf_value1 &= 0x00000FFF;
-    slide_buf_value2 &= 0x00000FFF;
-
     uint16_t cycle_length1;
     uint16_t cycle_length2;
     if (slide_type) {
@@ -96,8 +80,29 @@ inline void output_osc_and_cv_on_normal(uint8_t interval_count, uint8_t delta_ti
       cycle_length2 = MAX_CYCLE_LENGTH;
     }
 
+    cv_pitch = slide_pitch1;
+    slide_pitch1 = ((uint32_t)slide_speed * current_pitch1_dec + (uint32_t)(256 - slide_speed) * slide_pitch1 + 128) / 256;
+    uint8_t slide_oct1 = slide_pitch1 / (12*256);
+    uint16_t slide_note1 = slide_pitch1 % (12*256);
+    uint32_t val1 = pgm_read_word(&(cycle_speed_table[slide_note1]));
+    slide_buf_value1 += (val1 * interval_count) << (slide_oct1 + shift_oct);
+    wave1_count_in_cycle = (wave1_count_in_cycle + (slide_buf_value1 >> 12)) % MAX_CYCLE_LENGTH;
+    slide_buf_value1 &= 0x00000FFF;
     current_table_index1 = (uint32_t)wave1_count_in_cycle * WAVETABLE_SIZE / cycle_length1;
-    current_table_index2 = (((uint32_t)wave2_count_in_cycle * WAVETABLE_SIZE / cycle_length2) + phase_shift2) % WAVETABLE_SIZE;
+
+    if (current_values.v.wave_pitch_duration) {
+
+      slide_pitch2 = ((uint32_t)slide_speed * current_pitch2_dec + (uint32_t)(256 - slide_speed) * slide_pitch2 + 128) / 256;
+      uint8_t slide_oct2 = slide_pitch2 / (12*256);
+      uint16_t slide_note2 = slide_pitch2 % (12*256);
+      uint32_t val2 = pgm_read_word(&(cycle_speed_table[slide_note2]));
+      slide_buf_value2 += (val2 * interval_count) << (slide_oct2 + shift_oct);
+      wave2_count_in_cycle = (wave2_count_in_cycle + (slide_buf_value2 >> 12)) % MAX_CYCLE_LENGTH;
+      slide_buf_value2 &= 0x00000FFF;
+      current_table_index2 = (((uint32_t)wave2_count_in_cycle * WAVETABLE_SIZE / cycle_length2) + phase_shift2) % WAVETABLE_SIZE;
+    } else {
+      current_table_index2 = (current_table_index1 + phase_shift2) % WAVETABLE_SIZE;
+    }
   } else {
     uint8_t wave1_oct = current_oct1 + shift_oct;
     uint8_t wave2_oct = current_oct2 + shift_oct;
@@ -125,12 +130,17 @@ inline void output_osc_and_cv_on_normal(uint8_t interval_count, uint8_t delta_ti
       cv_pitch += (sine_wave_value >> 4) - 128;
     }
     uint16_t cycle_length1 = pgm_read_word(&(pitch_to_cycle[current_note_num1]));
-    uint16_t cycle_length2 = pgm_read_word(&(pitch_to_cycle[current_note_num2]));
 
     wave1_count_in_cycle = (wave1_count_in_cycle + wave1_count_diff) % cycle_length1;
-    wave2_count_in_cycle = (wave2_count_in_cycle + wave2_count_diff) % cycle_length2;
     current_table_index1 = (uint32_t)wave1_count_in_cycle * WAVETABLE_SIZE / cycle_length1;
-    current_table_index2 = (((uint32_t)wave2_count_in_cycle * WAVETABLE_SIZE / cycle_length2) + phase_shift2) % WAVETABLE_SIZE;
+
+    if (current_values.v.wave_pitch_duration) {
+      uint16_t cycle_length2 = pgm_read_word(&(pitch_to_cycle[current_note_num2]));
+      wave2_count_in_cycle = (wave2_count_in_cycle + wave2_count_diff) % cycle_length2;
+      current_table_index2 = (((uint32_t)wave2_count_in_cycle * WAVETABLE_SIZE / cycle_length2) + phase_shift2) % WAVETABLE_SIZE;
+    } else {
+      current_table_index2 = (current_table_index1 + phase_shift2) % WAVETABLE_SIZE;
+    }
   }
 
   uint16_t wave1_value = pgm_read_word(&(wavetables[selected_wavetable_type1][current_table_index1]));
