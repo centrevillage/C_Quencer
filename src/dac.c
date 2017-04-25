@@ -47,10 +47,26 @@ const uint8_t shift_oct = 0;
 volatile uint16_t vibrato_index = 0;
 inline void output_osc_and_cv_on_normal(uint8_t interval_count, uint8_t delta_tick){
   cli();
-  uint16_t cv_pitch = current_pitch1_dec;
 
-  uint16_t cycle_length1 = pgm_read_word(&(pitch_to_cycle[current_note_num1]));
-  uint16_t cycle_length2 = pgm_read_word(&(pitch_to_cycle[current_note_num2]));
+  uint16_t phase_shift2;
+  if (wave_phase_shift_cycle > 0) {
+    phase_count_buf += delta_tick << (wave_phase_shift_cycle-1);
+    uint16_t tmp_phase_count = phase_count_buf >> 4;
+    phase_ticks += tmp_phase_count;
+    phase_count_buf &= 0x0F;
+    if (prev_phase_ticks > phase_ticks) {
+      phase_direction = -phase_direction;
+    }
+    if (phase_direction > 0) {
+      phase_shift2 = phase_ticks/(0xFFFF/(WAVETABLE_SIZE));
+    } else {
+      phase_shift2 = WAVETABLE_SIZE - phase_ticks/(0xFFFF/WAVETABLE_SIZE);
+    }
+  } else {
+    phase_shift2 = wave_phase_shift * (WAVETABLE_SIZE / 16);
+  }
+
+  uint16_t cv_pitch = current_pitch1_dec;
 
   if (slide_speed > 0 && slide_pitch1 != current_pitch1_dec) { // pitch slide
     slide_pitch1 = ((uint32_t)slide_speed * current_pitch1_dec + (uint32_t)(256 - slide_speed) * slide_pitch1 + 128) / 256;
@@ -64,10 +80,24 @@ inline void output_osc_and_cv_on_normal(uint8_t interval_count, uint8_t delta_ti
     uint32_t val2 = pgm_read_word(&(cycle_speed_table[slide_note2]));
     slide_buf_value1 += (val1 * interval_count) << (slide_oct1 + shift_oct);
     slide_buf_value2 += (val2 * interval_count) << (slide_oct2 + shift_oct);
-    wave1_count_in_cycle = (wave1_count_in_cycle + (slide_buf_value1 >> 12)) % 61156;
-    wave2_count_in_cycle = (wave2_count_in_cycle + (slide_buf_value2 >> 12)) % 61156;
+    wave1_count_in_cycle = (wave1_count_in_cycle + (slide_buf_value1 >> 12)) % MAX_CYCLE_LENGTH;
+    wave2_count_in_cycle = (wave2_count_in_cycle + (slide_buf_value2 >> 12)) % MAX_CYCLE_LENGTH;
     slide_buf_value1 &= 0x00000FFF;
     slide_buf_value2 &= 0x00000FFF;
+
+    uint16_t cycle_length1;
+    uint16_t cycle_length2;
+    if (slide_type) {
+      // replay cycle length bug :)
+      cycle_length1 = pgm_read_word(&(pitch_to_cycle[current_note_num1]));
+      cycle_length2 = pgm_read_word(&(pitch_to_cycle[current_note_num2]));
+    } else {
+      cycle_length1 = MAX_CYCLE_LENGTH;
+      cycle_length2 = MAX_CYCLE_LENGTH;
+    }
+
+    current_table_index1 = (uint32_t)wave1_count_in_cycle * WAVETABLE_SIZE / cycle_length1;
+    current_table_index2 = (((uint32_t)wave2_count_in_cycle * WAVETABLE_SIZE / cycle_length2) + phase_shift2) % WAVETABLE_SIZE;
   } else {
     uint8_t wave1_oct = current_oct1 + shift_oct;
     uint8_t wave2_oct = current_oct2 + shift_oct;
@@ -94,30 +124,14 @@ inline void output_osc_and_cv_on_normal(uint8_t interval_count, uint8_t delta_ti
       wave2_count_diff += vibrato_mod2;
       cv_pitch += (sine_wave_value >> 4) - 128;
     }
+    uint16_t cycle_length1 = pgm_read_word(&(pitch_to_cycle[current_note_num1]));
+    uint16_t cycle_length2 = pgm_read_word(&(pitch_to_cycle[current_note_num2]));
+
     wave1_count_in_cycle = (wave1_count_in_cycle + wave1_count_diff) % cycle_length1;
     wave2_count_in_cycle = (wave2_count_in_cycle + wave2_count_diff) % cycle_length2;
+    current_table_index1 = (uint32_t)wave1_count_in_cycle * WAVETABLE_SIZE / cycle_length1;
+    current_table_index2 = (((uint32_t)wave2_count_in_cycle * WAVETABLE_SIZE / cycle_length2) + phase_shift2) % WAVETABLE_SIZE;
   }
-
-  current_table_index1 = (uint32_t)wave1_count_in_cycle * WAVETABLE_SIZE / cycle_length1;
-
-  uint16_t phase_shift2;
-  if (wave_phase_shift_cycle > 0) {
-    phase_count_buf += delta_tick << (wave_phase_shift_cycle-1);
-    uint16_t tmp_phase_count = phase_count_buf >> 4;
-    phase_ticks += tmp_phase_count;
-    phase_count_buf &= 0x0F;
-    if (prev_phase_ticks > phase_ticks) {
-      phase_direction = -phase_direction;
-    }
-    if (phase_direction > 0) {
-      phase_shift2 = phase_ticks/(0xFFFF/(WAVETABLE_SIZE));
-    } else {
-      phase_shift2 = WAVETABLE_SIZE - phase_ticks/(0xFFFF/WAVETABLE_SIZE);
-    }
-  } else {
-    phase_shift2 = wave_phase_shift * (WAVETABLE_SIZE / 16);
-  }
-  current_table_index2 = (((uint32_t)wave2_count_in_cycle * WAVETABLE_SIZE / cycle_length2) + phase_shift2) % WAVETABLE_SIZE;
 
   uint16_t wave1_value = pgm_read_word(&(wavetables[selected_wavetable_type1][current_table_index1]));
   uint16_t wave2_value = pgm_read_word(&(wavetables[selected_wavetable_type2][selected_wavetable_type2_sign ? current_table_index2 : (WAVETABLE_SIZE - 1 - current_table_index2)]));

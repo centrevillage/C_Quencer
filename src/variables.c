@@ -33,3 +33,4 @@ volatile uint16_t slide_pitch1 = 0;
 volatile uint16_t slide_pitch2 = 0;
 volatile uint32_t slide_buf_value1 = 0;
 volatile uint32_t slide_buf_value2 = 0;
+volatile uint8_t slide_type = 0;

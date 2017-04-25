@@ -13,6 +13,7 @@ extern volatile uint8_t current_pitch2;
 extern volatile uint16_t current_pitch1_dec;
 extern volatile uint16_t current_pitch2_dec;
 extern volatile uint8_t slide_speed;
+extern volatile uint8_t slide_type; // 0: normal slide, 1: buggy slide
 extern volatile uint8_t selected_wavetable_type1;
 extern volatile uint8_t selected_wavetable_type2;
 extern volatile uint8_t selected_wavetable_type2_sign;
