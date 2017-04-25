@@ -153,10 +153,8 @@ void output_osc_and_cv(uint8_t interval_count, uint8_t delta_tick) {
 }
 
 void reset_count_in_cycle() {
-  uint16_t cycle_length1 = pgm_read_word(&(pitch_to_cycle[current_note_num1]));
-  uint16_t cycle_length2 = pgm_read_word(&(pitch_to_cycle[current_note_num2]));
-  wave1_count_in_cycle = (uint32_t)current_table_index1 * cycle_length1 / WAVETABLE_SIZE;
-  wave2_count_in_cycle = (uint32_t)current_table_index2 * cycle_length2 / WAVETABLE_SIZE;
+  wave1_count_in_cycle = 0;
+  wave2_count_in_cycle = 0;
 }
 
 void reset_phase() {

@@ -323,6 +323,7 @@ void update_oct_note() {
   current_note_num2  = current_pitch2 % 12;
   current_pitch1_dec = current_pitch1 << 8;
   current_pitch2_dec = current_pitch2 << 8;
+  // 波形の位相をリセット。しなくてもよいが、するとアタック感が出る
   reset_count_in_cycle();
 }
 
