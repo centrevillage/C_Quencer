@@ -80,8 +80,8 @@ inline void output_osc_and_cv_on_normal(uint8_t interval_count, uint8_t delta_ti
       cycle_length2 = MAX_CYCLE_LENGTH;
     }
 
-    cv_pitch = slide_pitch1;
     slide_pitch1 = ((uint32_t)slide_speed * current_pitch1_dec + (uint32_t)(256 - slide_speed) * slide_pitch1 + 128) / 256;
+    cv_pitch = slide_pitch1;
     uint8_t slide_oct1 = slide_pitch1 / (12*256);
     uint16_t slide_note1 = slide_pitch1 % (12*256);
     uint32_t val1 = pgm_read_word(&(cycle_speed_table[slide_note1]));
