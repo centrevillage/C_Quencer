@@ -3,6 +3,7 @@
 #include "variables.h"
 #include "wavetable.h"
 #include "cycle_speed.h"
+#include "sequencer.h"
 
 #include <avr/pgmspace.h>
 
@@ -34,8 +35,10 @@ inline void output_dac_b(uint16_t data) {
 }
 
 
-uint16_t vibrato_count_buf = 0;
+uint16_t overshoot_ticks = 0;
+uint16_t overshoot_count_buf = 0;
 uint8_t vibrato_ticks = 0;
+uint16_t vibrato_count_buf = 0;
 uint16_t phase_count_buf = 0;
 uint16_t phase_ticks = 0;
 uint16_t prev_phase_ticks = 0;
@@ -45,6 +48,7 @@ volatile uint16_t wave2_count_in_cycle = 0;
 volatile uint16_t current_table_index1 = 0;
 volatile uint16_t current_table_index2 = 0;
 const uint8_t shift_oct = 0;
+volatile uint8_t in_overshoot = 0;
 inline void output_osc_and_cv_on_normal(uint8_t interval_count, uint8_t delta_tick){
   cli();
 
@@ -67,7 +71,24 @@ inline void output_osc_and_cv_on_normal(uint8_t interval_count, uint8_t delta_ti
   }
 
   int16_t pitch_mod = 0;
-  if (no_rec_values.v.pitch_vibrato) {
+  if (in_overshoot) {
+    uint16_t log_table_idx = (get_last_step_duration_ticks() * 24) + 431;
+
+    if (log_table_idx >= WAVETABLE_SIZE) {
+      in_overshoot = 0;
+      vibrato_ticks = 0;
+      vibrato_count_buf = 0;
+    } else {
+      uint16_t sine_table_idx = (log_wave(log_table_idx) - 3584) << 1;
+      uint16_t divide = (sine_table_idx >> 4) + 1;
+      uint8_t mult = (no_rec_values.v.pitch_overshoot & 0x0F) + 1;
+      if (no_rec_values.v.pitch_overshoot & 0x10) {
+        // invert
+        sine_table_idx = WAVETABLE_SIZE - sine_table_idx;
+      }
+      pitch_mod = (sine_wave(sine_table_idx) * mult / divide) - (2048 * mult / divide);
+    }
+  } else if (no_rec_values.v.pitch_vibrato) {
     vibrato_count_buf += delta_tick * (no_rec_values.v.pitch_vibrato & 0x0F) * 2;
     vibrato_ticks += vibrato_count_buf >> 8;
     vibrato_count_buf &= 0xFF;
@@ -184,9 +205,14 @@ void output_osc_and_cv(uint8_t interval_count, uint8_t delta_tick) {
   }
 }
 
-void reset_count_in_cycle() {
-  wave1_count_in_cycle = 0;
-  wave2_count_in_cycle = 0;
+void reset_counts_at_active_step() {
+  overshoot_ticks = 0;
+  overshoot_count_buf = 0;
+  if (no_rec_values.v.pitch_overshoot) {
+    in_overshoot = 1;
+  } else {
+    in_overshoot = 0;
+  }
 }
 
 void reset_phase() {

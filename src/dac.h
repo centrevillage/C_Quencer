@@ -9,7 +9,7 @@
 
 void output_osc_and_cv(uint8_t interval_count, uint8_t delta_tick);
 void spi_init();
-void reset_count_in_cycle();
+void reset_counts_at_active_step();
 void reset_phase();
 
 #endif /* CQ_DAC_H_ */

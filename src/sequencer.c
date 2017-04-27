@@ -22,6 +22,7 @@ void step_seq_on_edit_scale();
 void step_seq_on_edit_pattern();
 
 inline void count_last_step_duration();
+inline void update_slide();
 
 void step_seq() {
   switch(edit_mode) {
@@ -80,6 +81,9 @@ void step_seq_on_normal(){
   }
   cli();
   update_slide();
+  if (active_seq[current_step]) {
+    reset_counts_at_active_step();
+  }
   sei();
   cli();
   update_wave_shape();
@@ -327,7 +331,7 @@ void update_oct_note() {
   //reset_count_in_cycle();
 }
 
-void update_slide() {
+inline void update_slide() {
   uint8_t slide_val = current_values.v.slide;
   if (prev_pitch1 != current_pitch1 && active_seq[current_step] && prev_pitch1 < 120 && slide_val > 0) {
     slide_speed = (16 - slide_val);
@@ -346,6 +350,9 @@ void update_wave_shape() {
   uint8_t tmp_wave_type2 = (current_values.v.wave_select & 0x07);
   if (tmp_wave_type2 == 7) {
     // 意図的にwavetableのindex越えさせてノイズを発生
+    selected_wavetable_type2 = 5;
+  } else if (tmp_wave_type2 == 6) {
+    // log curve
     selected_wavetable_type2 = 4;
   } else {
     selected_wavetable_type2 = tmp_wave_type2 & 0x03;
@@ -406,3 +413,4 @@ void sync_clock() {
   ext_clock_prev_tick = ext_clock_tick;
   sei();
 }
+

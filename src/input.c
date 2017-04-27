@@ -262,8 +262,8 @@ void set_current_value_on_normal(uint8_t value, uint8_t knob_idx){
           set_led_count((value >> 3) + 1);
           break;
         case STABILITY:
-          no_rec_values.v.pitch_overshoot = value >> 2;
-          set_disp_left_8_dot_right_8_val(no_rec_values.v.pitch_overshoot);
+          no_rec_values.v.pitch_overshoot = value >> 3;
+          set_led_count(no_rec_values.v.pitch_overshoot + 1);
           break;
       }
       break;

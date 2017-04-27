@@ -12,7 +12,6 @@ void update_seq_pattern();
 void randomize_seq();
 void update_pitch();
 void update_oct_note();
-void update_slide();
 void update_wave_shape();
 
 uint16_t get_last_step_duration_ticks();

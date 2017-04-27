@@ -40,6 +40,17 @@ def gen_25per_skewed_tri
   table
 end
 
+def gen_log_curve
+  table = []
+  top_value = Math.log(TABLE_SIZE)
+  (1..TABLE_SIZE).each do |i|
+    if i >= 431
+      table << ((Math.log(i)) * (BIT_SIZE-1) / top_value).round
+    end
+  end
+  table
+end
+
 def print_table(table)
   puts "{"
     puts "  #{table.join(', ')}"
@@ -47,6 +58,7 @@ def print_table(table)
 end
 
 print_table(gen_saw)
+print_table(gen_25per_skewed_tri)
 print_table(gen_sin)
 print_table(gen_sqr)
-print_table(gen_25per_skewed_tri)
+print_table(gen_log_curve)
