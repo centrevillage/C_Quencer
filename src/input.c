@@ -5,6 +5,7 @@
 #include "led.h"
 #include "eeprom.h"
 #include "adc.h"
+#include "dac.h"
 
 volatile ControllerValue current_values;
 volatile NoRecValue no_rec_values;
@@ -32,7 +33,7 @@ static volatile uint8_t record_length = 0;
 static volatile uint8_t record_pos = 0;
 static volatile uint8_t play_pos = 0;
 
-volatile uint16_t prev_values[] = {0, 0, 0, 0};
+volatile uint16_t prev_knob_values[] = {0, 0, 0, 0};
 
 volatile uint32_t tap_tempo_hp_tick = 0;
 volatile uint8_t in_tap_tempo = 0;
@@ -41,11 +42,11 @@ volatile uint32_t tap_tempo_interval;
 void leave_on_rec_mode();
 
 inline void update_knob_value_inline(uint8_t i) {
-  uint16_t prev_value;
+  uint16_t prev_knob_value;
   uint16_t new_value_sum;
   uint16_t new_value;
 
-  prev_value = prev_values[i];
+  prev_knob_value = prev_knob_values[i];
 
   //new_value_sum = 0;
   //for (uint8_t j = 0; j < KNOB_VALUES_SIZE; ++j) {
@@ -60,15 +61,15 @@ inline void update_knob_value_inline(uint8_t i) {
   new_value_sum += knob_values[i][6];
   new_value_sum += knob_values[i][7];
 
-  int diff = new_value_sum - prev_value * KNOB_VALUES_SIZE;
+  int diff = new_value_sum - prev_knob_value * KNOB_VALUES_SIZE;
   if (diff >= KNOB_VALUES_SIZE) {
-    new_value = prev_value + diff / KNOB_VALUES_SIZE;
+    new_value = prev_knob_value + diff / KNOB_VALUES_SIZE;
     set_current_value((uint8_t)new_value, i);
-    prev_values[i] = new_value;
+    prev_knob_values[i] = new_value;
   } else if (diff <= -KNOB_VALUES_SIZE) {
-    new_value = prev_value - ((-diff) / KNOB_VALUES_SIZE);
+    new_value = prev_knob_value - ((-diff) / KNOB_VALUES_SIZE);
     set_current_value((uint8_t)new_value, i);
-    prev_values[i] = new_value;
+    prev_knob_values[i] = new_value;
   }
 }
 

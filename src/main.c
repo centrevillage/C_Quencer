@@ -65,18 +65,8 @@ inline void update_knob_values_on_stop() {
   }
 }
 
-uint8_t prev_count = 0;
-uint8_t div16_count_buf = 0;
 inline void loop() {
-  uint8_t current_count = TCNT2;
-  uint8_t interval_count = current_count - prev_count;
-  if (interval_count > 0 ) {
-    div16_count_buf += interval_count;
-    uint8_t div8_interval = div16_count_buf / 8;
-    div16_count_buf -= div8_interval * 8;
-    output_osc_and_cv(interval_count, div8_interval);
-    prev_count = current_count;
-  }
+  dac_process();
   output_led();
   update_knob_values_on_stop();
 }

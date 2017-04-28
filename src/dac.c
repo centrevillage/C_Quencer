@@ -48,10 +48,10 @@ volatile uint16_t wave2_count_in_cycle = 0;
 volatile uint16_t current_table_index1 = 0;
 volatile uint16_t current_table_index2 = 0;
 const uint8_t shift_oct = 0;
-volatile uint8_t in_overshoot = 0;
+volatile int8_t pitch_diff = 0;
+volatile int8_t pitch_diff_abs = 0;
+volatile int8_t log_table_idx_speed = 0;
 inline void output_osc_and_cv_on_normal(uint8_t interval_count, uint8_t delta_tick){
-  cli();
-
   uint16_t phase_shift2;
   if (wave_phase_shift_cycle > 0) {
     phase_count_buf += delta_tick << (wave_phase_shift_cycle-1);
@@ -71,18 +71,18 @@ inline void output_osc_and_cv_on_normal(uint8_t interval_count, uint8_t delta_ti
   }
 
   int16_t pitch_mod = 0;
-  if (in_overshoot) {
-    uint16_t log_table_idx = (get_last_step_duration_ticks() * 24) + 431;
+  if (log_table_idx_speed) {
+    uint16_t log_table_idx = (get_last_step_duration_ticks() * log_table_idx_speed) + 431;
 
     if (log_table_idx >= WAVETABLE_SIZE) {
-      in_overshoot = 0;
+      log_table_idx_speed = 0;
       vibrato_ticks = 0;
       vibrato_count_buf = 0;
     } else {
       uint16_t sine_table_idx = (log_wave(log_table_idx) - 3584) << 1;
-      uint16_t divide = (sine_table_idx >> 4) + 1;
+      uint16_t divide = (sine_table_idx >> 4) + (24 - pitch_diff_abs) + 1;
       uint8_t mult = (no_rec_values.v.pitch_overshoot & 0x0F) + 1;
-      if (no_rec_values.v.pitch_overshoot & 0x10) {
+      if (!!(no_rec_values.v.pitch_overshoot & 0x10) ^ (pitch_diff < 0)) {
         // invert
         sine_table_idx = WAVETABLE_SIZE - sine_table_idx;
       }
@@ -169,7 +169,6 @@ inline void output_osc_and_cv_on_normal(uint8_t interval_count, uint8_t delta_ti
   // 120 pitch unit = 5 * 120 / 128  = 4.68 V pin out
   // 4.68 V pin out -> analog gain x 2.17 -> 10V cv out
   output_dac_b((cv_pitch >> 3) + (3 << 5)); // +3 -> change 1V = 'C' to 'A'
-  sei();
 }
 
 inline void output_osc_and_cv_on_edit(uint8_t interval_count, uint8_t delta_tick){
@@ -189,7 +188,7 @@ inline void output_osc_and_cv_on_edit(uint8_t interval_count, uint8_t delta_tick
 //1 timer count = 62.5kHz = 1/ 62500 s = 16 us / 1 cycle
 // ldac_pin = PB1
 // ss_pin = PB0
-void output_osc_and_cv(uint8_t interval_count, uint8_t delta_tick) {
+inline void output_osc_and_cv(uint8_t interval_count, uint8_t delta_tick) {
   switch(edit_mode) {
     case NORMAL:
       if (TCCR1B & _BV(CS12)) {
@@ -209,9 +208,14 @@ void reset_counts_at_active_step() {
   overshoot_ticks = 0;
   overshoot_count_buf = 0;
   if (no_rec_values.v.pitch_overshoot) {
-    in_overshoot = 1;
+    pitch_diff = current_pitch1 - prev_pitch1;
+    pitch_diff_abs = pitch_diff < 0 ? -pitch_diff : pitch_diff;
+    if (pitch_diff_abs > 24) {
+      pitch_diff_abs = 24;
+    }
+    log_table_idx_speed = ((65535 - step_interval) >> 11) + 1;
   } else {
-    in_overshoot = 0;
+    log_table_idx_speed = 0;
   }
 }
 
@@ -225,3 +229,18 @@ void reset_phase() {
   current_table_index2 = 0;
 }
 
+volatile uint8_t prev_count = 0;
+volatile uint8_t div16_count_buf = 0;
+void dac_process() {
+  cli();
+  uint8_t current_count = TCNT2;
+  uint8_t interval_count = current_count - prev_count;
+  if (interval_count > 0 ) {
+    div16_count_buf += interval_count;
+    uint8_t div8_interval = div16_count_buf / 8;
+    div16_count_buf -= div8_interval * 8;
+    output_osc_and_cv(interval_count, div8_interval);
+    prev_count = current_count;
+  }
+  sei();
+}

@@ -48,6 +48,8 @@ void step_seq_on_normal(){
   }
   divide_idx = 1;
 
+  update_knob_values();
+
   cli();
   if (_step < (current_values.v.step_length-1)) {
     ++_step;
@@ -60,8 +62,6 @@ void step_seq_on_normal(){
   sei();
 
   start_gate_timer();
-
-  update_knob_values();
 
   cli();
   if (rec_mode == PLAY || rec_mode == REC) {
@@ -77,14 +77,11 @@ void step_seq_on_normal(){
   if (active_seq[current_step]) {
     cli();
     update_pitch();
+    update_slide();
+    reset_counts_at_active_step();
     sei();
   }
-  cli();
-  update_slide();
-  if (active_seq[current_step]) {
-    reset_counts_at_active_step();
-  }
-  sei();
+
   cli();
   update_wave_shape();
 
@@ -327,13 +324,11 @@ void update_oct_note() {
   current_note_num2  = current_pitch2 % 12;
   current_pitch1_dec = current_pitch1 << 8;
   current_pitch2_dec = current_pitch2 << 8;
-  // 波形の位相をリセット。しなくてもよいが、するとアタック感が出る
-  //reset_count_in_cycle();
 }
 
 inline void update_slide() {
   uint8_t slide_val = current_values.v.slide;
-  if (prev_pitch1 != current_pitch1 && active_seq[current_step] && prev_pitch1 < 120 && slide_val > 0) {
+  if (slide_val > 0 && prev_pitch1 != current_pitch1 && prev_pitch1 < 120) {
     slide_speed = (16 - slide_val);
     slide_pitch1 = prev_pitch1 << 8;
     slide_pitch2 = prev_pitch2 << 8;
@@ -345,41 +340,46 @@ inline void update_slide() {
 }
 
 void update_wave_shape() {
-  // 下位3bitがwave2のidx、上位がwave1のidx
-  selected_wavetable_type1 = current_values.v.wave_select >> 3;
-  uint8_t tmp_wave_type2 = (current_values.v.wave_select & 0x07);
-  if (tmp_wave_type2 == 7) {
-    // 意図的にwavetableのindex越えさせてノイズを発生
-    selected_wavetable_type2 = 5;
-  } else if (tmp_wave_type2 == 6) {
-    // log curve
-    selected_wavetable_type2 = 4;
-  } else {
-    selected_wavetable_type2 = tmp_wave_type2 & 0x03;
-    selected_wavetable_type2_sign = !(tmp_wave_type2 & 0x04);
+  if (changed_value_flags & _BV(CHG_VAL_FLAG_WAVE_SELECT)) {
+    // 下位3bitがwave2のidx、上位がwave1のidx
+    selected_wavetable_type1 = current_values.v.wave_select >> 3;
+    uint8_t tmp_wave_type2 = (current_values.v.wave_select & 0x07);
+    if (tmp_wave_type2 == 7) {
+      // 意図的にwavetableのindex越えさせてノイズを発生
+      selected_wavetable_type2 = 5;
+    } else if (tmp_wave_type2 == 6) {
+      // log curve
+      selected_wavetable_type2 = 4;
+    } else {
+      selected_wavetable_type2 = tmp_wave_type2 & 0x03;
+      selected_wavetable_type2_sign = !(tmp_wave_type2 & 0x04);
+    }
   }
 
   if (changed_value_flags & _BV(CHG_VAL_FLAG_WAVE_PHASE)) {
     reset_phase();
+    if (current_values.v.wave_phase < 16) {
+      wave_phase_shift = current_values.v.wave_phase;
+      wave_phase_shift_cycle = 0;
+    } else {
+      wave_phase_shift = 0;
+      wave_phase_shift_cycle = (current_values.v.wave_phase - 15);
+    }
   }
 
-  if (current_values.v.wave_phase < 16) {
-    wave_phase_shift = current_values.v.wave_phase;
-    wave_phase_shift_cycle = 0;
-  } else {
-    wave_phase_shift = 0;
-    wave_phase_shift_cycle = (current_values.v.wave_phase - 15);
+  if (changed_value_flags & _BV(CHG_VAL_FLAG_WAVE_BALANCE)) {
+    wave1_volume = 8 - current_values.v.wave_balance;
+    wave2_volume = current_values.v.wave_balance;
   }
 
-  wave1_volume = 8 - current_values.v.wave_balance;
-  wave2_volume = current_values.v.wave_balance;
-
-  if (current_values.v.wave_pitch_duration < 16) {
-    pitch_duration_quantized = 0;
-    pitch_duration = current_values.v.wave_pitch_duration;
-  } else {
-    pitch_duration_quantized = 1;
-    pitch_duration = current_values.v.wave_pitch_duration - 15;
+  if (changed_value_flags & _BV(CHG_VAL_FLAG_WAVE_PITCH_DURATION)) {
+    if (current_values.v.wave_pitch_duration < 16) {
+      pitch_duration_quantized = 0;
+      pitch_duration = current_values.v.wave_pitch_duration;
+    } else {
+      pitch_duration_quantized = 1;
+      pitch_duration = current_values.v.wave_pitch_duration - 15;
+    }
   }
 }
 
