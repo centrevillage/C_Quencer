@@ -60,7 +60,7 @@ void step_seq_on_normal(){
     current_step = seq_start_shift;
     update_seq_pattern();
   }
-  is_active_seq = active_seq_bits & _BV(current_step);
+  is_active_seq = !!(active_seq_bits & _BV(current_step));
   sei();
 
   start_gate_timer();
@@ -242,6 +242,7 @@ void update_seq_pattern() {
   } else {
     // rot trigger
     seq_start_shift = 0;
+    steprot = steprot ? steprot % steplen : 0;
     active_seq_bits = steprot ? bit_left_rotate_in_16bit_with_length(euclid_seq, steprot, steplen) : euclid_seq;
   }
   randomize_seq();

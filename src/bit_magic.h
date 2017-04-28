@@ -20,22 +20,22 @@ inline uint8_t bit_index_in_8bit(uint8_t bits) {
   return bit_count_in_8bit((bits & (-bits)) - 1);
 }
 
-inline uint8_t bit_index_in_16bit(uint16_t bits) {
+inline uint16_t bit_index_in_16bit(uint16_t bits) {
   return bit_count_in_16bit((bits & (-bits)) - 1);
 }
 
-inline uint8_t bit_left_rotate_in_16bit(uint16_t bits, uint8_t rotate /* 0 to 15 */) {
+inline uint16_t bit_left_rotate_in_16bit(uint16_t bits, uint8_t rotate /* 0 to 15 */) {
   return (bits << rotate) | (bits >> (16 - rotate));
 }
 
-inline uint8_t bit_left_rotate_in_16bit_with_length(uint16_t bits, uint8_t rotate /* 0 to length */, uint8_t length /* 1.. 16 */) {
+inline uint16_t bit_left_rotate_in_16bit_with_length(uint16_t bits, uint8_t rotate /* 0 to length */, uint8_t length /* 1.. 16 */) {
   if (length == 16) {
     return bit_left_rotate_in_16bit(bits, rotate);
   }
-  return ((bits << rotate) | (bits >> (length - rotate))) & ((1<<(length+1)) - 1);
+  return ((bits << rotate) | (bits >> (length - rotate))) & ((1<<(length)) - 1);
 }
 
-inline uint8_t bit_right_rotate_in_16bit(uint16_t bits, uint8_t rotate /* 0 to 15 */) {
+inline uint16_t bit_right_rotate_in_16bit(uint16_t bits, uint8_t rotate /* 0 to 15 */) {
   return (bits >> rotate) | (bits << (16 - rotate));
 }
 
