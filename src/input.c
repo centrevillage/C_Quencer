@@ -390,7 +390,6 @@ void update_button_history(uint8_t button_idx) {
   enum FuncMode mode = get_func_mode();
   if (button_history.mode == mode && button_history.button_idx == button_idx) {
     uint16_t t = ticks();
-    button_history.button_idx = button_idx;
     button_history.count += 1;
     button_history.interval_tick = t - button_history.last_tick;
     button_history.last_tick = t;
