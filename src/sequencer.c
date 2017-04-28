@@ -10,6 +10,7 @@
 #include "eeprom.h"
 #include "variables.h"
 #include "wavetable.h"
+#include "bit_magic.h"
 
 volatile uint8_t divide_idx = 1;
 volatile uint8_t pitch_duration_quantized = 0;
@@ -59,6 +60,7 @@ void step_seq_on_normal(){
     current_step = seq_start_shift;
     update_seq_pattern();
   }
+  is_active_seq = active_seq_bits & _BV(current_step);
   sei();
 
   start_gate_timer();
@@ -74,7 +76,7 @@ void step_seq_on_normal(){
   }
   sei();
 
-  if (active_seq[current_step]) {
+  if (is_active_seq) {
     cli();
     update_pitch();
     update_slide();
@@ -130,7 +132,7 @@ void step_seq_on_edit_pattern(){
 
 uint16_t last_step_duration = 0;
 void count_last_step_duration() {
-  if (active_seq[current_step] && divide_idx == 1) {
+  if (is_active_seq && divide_idx == 1) {
     last_step_duration = 0;
   } else {
     if (last_step_duration < 0x7FFF) {
@@ -177,7 +179,7 @@ void start_gate_timer() {
   //start timer
   TCCR0B = (1<<CS02) | (1<<CS00); // divide 1024
   
-  if (active_seq[current_step]) {
+  if (is_active_seq) {
     //gate on
     PORTB &= ~_BV(2);
   }
@@ -236,23 +238,11 @@ void update_seq_pattern() {
     // rot start
     steprot = steprot - 16;
     seq_start_shift = steprot;
-    for (uint8_t i = 0; i < 16; ++i) {
-      if (i < steplen && steprot > 0) {
-        active_seq[(i+seq_start_shift)%16] = !!(euclid_seq & (1 << ((i+steprot)%steplen)));
-      } else {
-        active_seq[(i+seq_start_shift)%16] = !!(euclid_seq & (1 << i));
-      }
-    }
+    active_seq_bits = seq_start_shift ? bit_left_rotate_in_16bit(euclid_seq, seq_start_shift) : euclid_seq;
   } else {
     // rot trigger
     seq_start_shift = 0;
-    for (uint8_t i = 0; i < 16; ++i) {
-      if (i < steplen && steprot > 0) {
-        active_seq[i] = !!(euclid_seq & (1 << ((i + steprot)%steplen)));
-      } else {
-        active_seq[i] = !!(euclid_seq & (1 << i));
-      }
-    }
+    active_seq_bits = steprot ? bit_left_rotate_in_16bit_with_length(euclid_seq, steprot, steplen) : euclid_seq;
   }
   randomize_seq();
 }
@@ -262,7 +252,7 @@ void randomize_seq() {
     for (uint8_t i = 0; i < current_values.v.step_length; ++i) {
       if ((uint8_t)(rand() >> 8) < current_values.v.step_rand) {
         uint8_t step = (i + seq_start_shift) % 16;
-        active_seq[step] = !active_seq[step];
+        active_seq_bits ^= _BV(step);
       }
     }
   }

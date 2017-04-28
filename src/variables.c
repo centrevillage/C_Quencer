@@ -1,6 +1,7 @@
 #include "variables.h"
 
-volatile unsigned char active_seq[16] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+volatile uint16_t active_seq_bits = 0;
+volatile uint8_t is_active_seq = 0;
 volatile uint8_t current_step = 0;
 // 1 tick(timer1) = 16 usec, 120 BPM = 2sec / 16 usec / 16 = 7812.5 tick;
 volatile uint16_t step_interval = 8000L;

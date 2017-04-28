@@ -35,7 +35,7 @@ static const uint8_t led_idx_to_port_and_ddr[16][2] PROGMEM = {
 };
 
 void output_led_on_seq() {
-  if (active_seq[g_led_i]) {
+  if (is_active_seq) {
     if (!(current_step == g_led_i && active_step_gate)) {
       PORTD |= pgm_read_byte(&(led_idx_to_port_and_ddr[g_led_i][0]));
       DDRD   = pgm_read_byte(&(led_idx_to_port_and_ddr[g_led_i][1]));

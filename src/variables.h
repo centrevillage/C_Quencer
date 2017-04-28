@@ -3,7 +3,8 @@
 #ifndef CQ_VARIABLES_H_
 #define CQ_VARIABLES_H_
 
-extern volatile unsigned char active_seq[16];
+extern volatile uint16_t active_seq_bits;
+extern volatile uint8_t is_active_seq;
 extern volatile uint8_t current_step;
 extern volatile uint16_t step_interval;
 extern volatile uint8_t divide_count;
