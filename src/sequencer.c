@@ -281,11 +281,19 @@ void update_pitch() {
   prev_note_num1  = current_note_num1;
   prev_oct2       = current_oct2;
   prev_note_num2  = current_note_num2;
-  int pattern_value = ((preset_info.pattern_preset.patterns[current_values.v.scale_pattern][current_step] - 8) * current_values.v.scale_range);
-  int rand_value = (((int)current_values.v.scale_pattern_random * ((int)(rand() >> 12) - 8)));
-  int tmp_value = ((pattern_value + rand_value) / 5) + current_values.v.scale_shift;
-  if (tmp_value < 0) {
-    tmp_value = 0;
+  uint8_t pattern_value = (preset_info.pattern_preset.patterns[current_values.v.scale_pattern][current_step] * current_values.v.scale_range) >> 2;
+  uint8_t rand_value = (current_values.v.scale_pattern_random * (uint8_t)(rand() >> 12)) >> 2;
+  uint8_t center_diff = (2 * current_values.v.scale_range) + (2 * current_values.v.scale_pattern_random);
+  int8_t shift_value = current_values.v.scale_shift - center_diff;
+  uint8_t tmp_value = pattern_value + rand_value;
+  if (shift_value >= 0) {
+    tmp_value += (uint8_t)shift_value;
+  } else {
+    if (tmp_value < (uint8_t)(-shift_value)) {
+      tmp_value = 0;
+    } else {
+      tmp_value += (uint8_t)shift_value;
+    }
   }
 
   current_pitch1 = quantize_pitch(tmp_value);
