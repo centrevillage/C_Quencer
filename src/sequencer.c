@@ -416,9 +416,9 @@ void sync_clock() {
   if (ext_clock_interval_32 < 0x7FFF && ext_clock_interval_32 > 0xFF) {
     uint16_t ext_clock_interval  = ext_clock_interval_32;
     uint16_t int_clock_count = TCNT1;
-    int16_t diff_count = int_clock_count % ext_clock_interval;
+    int16_t diff_count = int_clock_count;
     int16_t diff_interval = ext_clock_interval - step_interval;
-    if (diff_count > ext_clock_interval / 2 && diff_count <= ext_clock_interval) {
+    if (int_clock_count > ext_clock_interval / 2) {
       diff_count -= ext_clock_interval;
     }
     int16_t phase_adj;
