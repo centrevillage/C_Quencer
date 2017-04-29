@@ -282,11 +282,11 @@ void update_pitch() {
   prev_note_num1  = current_note_num1;
   prev_oct2       = current_oct2;
   prev_note_num2  = current_note_num2;
-  uint8_t pattern_value = (preset_info.pattern_preset.patterns[current_values.v.scale_pattern][current_step] * current_values.v.scale_range) >> 2;
-  uint8_t rand_value = (current_values.v.scale_pattern_random * (uint8_t)(rand() >> 12)) >> 2;
+  uint8_t pattern_value = (preset_info.pattern_preset.patterns[current_values.v.scale_pattern][current_step] * current_values.v.scale_range) >> 1;
+  uint8_t rand_value = (current_values.v.scale_pattern_random * (uint8_t)(rand() >> 12)) >> 1;
   uint8_t center_diff = (2 * current_values.v.scale_range) + (2 * current_values.v.scale_pattern_random);
   int8_t shift_value = current_values.v.scale_shift - center_diff;
-  uint8_t tmp_value = pattern_value + rand_value;
+  uint8_t tmp_value = (pattern_value + rand_value) >> 1;
   if (shift_value >= 0) {
     tmp_value += (uint8_t)shift_value;
   } else {
