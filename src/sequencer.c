@@ -413,12 +413,24 @@ void sync_clock() {
   cli();
   uint32_t ext_clock_tick = hp_ticks() / 4;
   uint32_t ext_clock_interval_32  = ext_clock_tick - ext_clock_prev_tick;
-  if (ext_clock_interval_32 < 0x7FFF && ext_clock_interval_32 > 0xFF) {
-    uint16_t ext_clock_interval  = ext_clock_interval_32;
+  if (ext_clock_interval_32 < 0xFFFF && ext_clock_interval_32 > 0xFF) {
+    uint16_t ext_clock_interval = ext_clock_interval_32;
     uint16_t int_clock_count = TCNT1;
-    int16_t diff_count = int_clock_count % ext_clock_interval;
-    int16_t diff_interval = ext_clock_interval - step_interval;
-    if (int_clock_count > ext_clock_interval / 2) {
+    int16_t diff_count;
+    if (int_clock_count > 0x7FFF) {
+      diff_count = 0x7FFF;
+    } else {
+      diff_count = int_clock_count;
+    }
+    int16_t diff_interval;
+    if (ext_clock_interval > step_interval && (ext_clock_interval - step_interval) > 0x7FFF) {
+      diff_interval = 0x7FFF;
+    } else if (ext_clock_interval < step_interval && (step_interval - ext_clock_interval) > 0x7FFF) {
+      diff_interval = -(0x7FFF);
+    } else {
+      diff_interval = ext_clock_interval - step_interval;
+    }
+    if (int_clock_count > (ext_clock_interval / 2)) {
       diff_count -= ext_clock_interval;
     }
     int16_t phase_adj = 0;
@@ -429,12 +441,12 @@ void sync_clock() {
       } else {
         phase_adj = diff_count;
       }
+      prev_diff_count = diff_count;
     }
-    step_interval += (diff_interval >> 3) + (phase_adj / 4);
+    step_interval += (diff_interval >> 2) + (phase_adj / 4);
     if (step_interval < 0x7F) {
       step_interval = 0x7F;
     }
-    prev_diff_count = diff_count;
   }
   ext_clock_prev_tick = ext_clock_tick;
   sei();

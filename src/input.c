@@ -689,10 +689,10 @@ ISR(PCINT2_vect) {
 // REC BUTTON = PC5, PCINT13
 ISR(PCINT1_vect) {
   if(bit_is_clear(PINC,4)) {
-    if (edit_mode == NORMAL && (TCNT1 == 0 || TCNT1 > 50)) {
+    if (edit_mode == NORMAL) {
       if (no_rec_values.v.int_clock_sync_to_ext) {
         sync_clock();
-      } else {
+      } else if (TCNT1 == 0 || TCNT1 > 50) {
         if (!current_state.start) {
           start_trigger();
         }
