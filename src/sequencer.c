@@ -427,7 +427,7 @@ void sync_clock() {
     } else {
       phase_adj = diff_count;
     }
-    step_interval += (diff_interval >> 2) + phase_adj / 4;
+    step_interval += (diff_interval >> 3) + (phase_adj >> 2);
     if (step_interval < 0x7F) {
       step_interval = 0x7F;
     }
