@@ -1,3 +1,12 @@
+Ver 1.0.0:
+* huge performance improvement
+* add INSTABILITY mode (press TAP -> press START -> press FUNC)
+	* FILL: CLOCK LFO MOD (select LFO rate & amp)
+	* ROT: SYNC MODE (0: mix(default), 1: loose sync)
+	* SCALE: VIBRATO (0-15: delayed vibrato(selectable rate), 16-31: normal vibrato(selectable rate)
+	* PAT: PITCH OVERSHOOT (0-15: overshoot above, 16-31: overshoot below)
+* add new Waveform(Log Curve) to OSC2 (at 6 position)
+		
 Ver 0.9.5:
 	more stabilize knob value read
 
