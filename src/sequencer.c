@@ -24,6 +24,7 @@ void step_seq_on_edit_pattern();
 
 inline void count_last_step_duration();
 inline void update_slide();
+inline void start_seq_exec();
 
 void step_seq() {
   switch(edit_mode) {
@@ -151,9 +152,10 @@ void start_trigger() {
   TCNT1 = 0;
   TCCR1B |= (1<<CS12); // divide 256
   OCR1A = 0xFFFF;
+  in_start_seq = 1;
 }
 
-void start_seq() {
+inline void start_seq_exec() {
   current_state.start = 1;
   srand(button_history.last_tick);
   TCNT1 = 0;
@@ -161,10 +163,24 @@ void start_seq() {
   reset_phase();
 }
 
+void start_seq() {
+  if (no_rec_values.v.int_clock_sync_to_ext) {
+    current_state.start = 1;
+    srand(button_history.last_tick);
+    in_start_seq = 1;
+  } else {
+    in_start_seq = 1;
+    start_seq_exec();
+  }
+}
+
 void stop_seq() {
+  in_start_seq = 0;
   current_state.start = 0;
-  TCCR1B &= ~(1<<CS12);
-  TCNT1 = 0;
+  if (!no_rec_values.v.int_clock_sync_to_ext) {
+    TCCR1B &= ~(1<<CS12);
+    TCNT1 = 0;
+  }
 }
 
 void reset_seq() {
@@ -386,6 +402,14 @@ void update_wave_shape() {
 volatile uint32_t ext_clock_prev_tick = 0;
 int16_t prev_diff_count = 0;
 void sync_clock() {
+  if (!(TCCR1B & _BV(CS12))) {
+    cli();
+    TCNT1 = 0;
+    TCCR1B |= (1<<CS12); // divide 256
+    ext_clock_prev_tick = hp_ticks() / 4;
+    sei();
+    return;
+  }
   cli();
   uint32_t ext_clock_tick = hp_ticks() / 4;
   uint32_t ext_clock_interval_32  = ext_clock_tick - ext_clock_prev_tick;

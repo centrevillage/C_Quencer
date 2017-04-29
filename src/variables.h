@@ -40,4 +40,6 @@ extern volatile uint8_t prev_note_num1;
 extern volatile uint8_t prev_oct2;
 extern volatile uint8_t prev_note_num2;
 
+extern volatile uint8_t in_start_seq;
+
 #endif /* CQ_VARIABLES_H_ */

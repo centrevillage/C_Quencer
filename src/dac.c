@@ -191,7 +191,7 @@ inline void output_osc_and_cv_on_edit(uint8_t interval_count, uint8_t delta_tick
 inline void output_osc_and_cv(uint8_t interval_count, uint8_t delta_tick) {
   switch(edit_mode) {
     case NORMAL:
-      if (TCCR1B & _BV(CS12)) {
+      if (in_start_seq) {
         output_osc_and_cv_on_normal(interval_count, delta_tick);
       }
       break;
