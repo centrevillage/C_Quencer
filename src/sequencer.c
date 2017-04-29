@@ -416,18 +416,21 @@ void sync_clock() {
   if (ext_clock_interval_32 < 0x7FFF && ext_clock_interval_32 > 0xFF) {
     uint16_t ext_clock_interval  = ext_clock_interval_32;
     uint16_t int_clock_count = TCNT1;
-    int16_t diff_count = int_clock_count;
+    int16_t diff_count = int_clock_count % ext_clock_interval;
     int16_t diff_interval = ext_clock_interval - step_interval;
     if (int_clock_count > ext_clock_interval / 2) {
       diff_count -= ext_clock_interval;
     }
-    int16_t phase_adj;
-    if ((diff_count - prev_diff_count) != 0) {
-      phase_adj = (diff_count-prev_diff_count);
-    } else {
-      phase_adj = diff_count;
+    int16_t phase_adj = 0;
+    if (!no_rec_values.v.int_clock_instability
+        && (!current_values.v.swing || (current_step % 2 == !(diff_count > 0)))) {
+      if ((diff_count - prev_diff_count) != 0) {
+        phase_adj = (diff_count-prev_diff_count);
+      } else {
+        phase_adj = diff_count;
+      }
     }
-    step_interval += (diff_interval >> 3) + (phase_adj >> 2);
+    step_interval += (diff_interval >> 3) + (phase_adj / 4);
     if (step_interval < 0x7F) {
       step_interval = 0x7F;
     }
