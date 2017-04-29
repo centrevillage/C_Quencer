@@ -117,11 +117,11 @@ inline void output_osc_and_cv_on_normal(uint8_t interval_count, uint8_t delta_ti
 
   if (slide_speed > 0 && slide_pitch1 != current_pitch1_dec) { // pitch slide
     slide_pitch1 = ((uint32_t)slide_speed * current_pitch1_dec + (uint32_t)(256 - slide_speed) * slide_pitch1 + 128) / 256;
-    cv_pitch = slide_pitch1;
+    cv_pitch = slide_pitch1 + pitch_mod;
     slide_oct1 = slide_pitch1 / (12*256);
     slide_note1 = slide_pitch1 % (12*256);
   } else {
-    cv_pitch = current_pitch1_dec;
+    cv_pitch = current_pitch1_dec + pitch_mod;
     slide_oct1 = current_oct1;
     slide_note1 = current_note_num1 * 256;
   }
