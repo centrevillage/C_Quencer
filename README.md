@@ -2,7 +2,7 @@
 
 ## Operation Manual
 
-[ver 1.0](https://github.com/centrevillage/C_Quencer/blob/master/doc/C_Quencer_ver1.0_Manual_JP.pdf)
+[ver 1.0](https://github.com/centrevillage/C_Quencer/raw/master/doc/C_Quencer_ver1.0_Manual_JP.pdf)
 
 [ver 0.3, 0.4](https://docs.google.com/document/d/13KKrxWZMQznam8sgkmz99NLFrwOqDBrAlAN6UPDG6dc/edit?usp=sharing)
 
