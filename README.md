@@ -8,8 +8,9 @@
 
 ## Building Manual
 
-[ver 0.3](https://docs.google.com/document/d/1b9S5hhJaEPMowWSLihDXAuJFFu3bsB46beQqKKnV82s/edit?usp=sharing)
-[ver 0.4](https://docs.google.com/document/d/1LNzIree1N4cUlGgIiVY1FijSOVP72S98gZMwPhDXNlw/edit?usp=sharing)
+[ver 0.3 (JP)](https://docs.google.com/document/d/1b9S5hhJaEPMowWSLihDXAuJFFu3bsB46beQqKKnV82s/edit?usp=sharing)
+[ver 0.4 (JP)](https://docs.google.com/document/d/1LNzIree1N4cUlGgIiVY1FijSOVP72S98gZMwPhDXNlw/edit?usp=sharing)
+[ver 0.4 (EN)](https://docs.google.com/document/d/1xHGQzJ4CwG-xsUguRl2wMdpgvsYHjSND6gInU8k3pP8/edit?usp=sharing)
 
 ## BOM
   https://docs.google.com/spreadsheets/d/1VDif7U_uzp9MytvVjhtFVuhgSCxw1dvosUy1xRro134/edit?usp=sharing
