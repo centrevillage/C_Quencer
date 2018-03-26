@@ -2,15 +2,19 @@
 
 ## Operation Manual
 
-[ver 1.0](https://github.com/centrevillage/C_Quencer/raw/master/doc/C_Quencer_ver1.0_Manual_JP.pdf)
+[ver 1.0 (JP)](https://github.com/centrevillage/C_Quencer/raw/master/doc/C_Quencer_ver1.0_Manual_JP.pdf)
 
-[ver 0.3, 0.4](https://docs.google.com/document/d/13KKrxWZMQznam8sgkmz99NLFrwOqDBrAlAN6UPDG6dc/edit?usp=sharing)
+[ver 1.0 (EN) (stay translating...)](https://docs.google.com/document/d/1C3tVHr_0RKfUUkRJgVzGgZzC86ytRPRR3AXJSW8mrI8/edit?usp=sharing)
+
 
 ## Building Manual
 
-[ver 0.3 (JP)](https://docs.google.com/document/d/1b9S5hhJaEPMowWSLihDXAuJFFu3bsB46beQqKKnV82s/edit?usp=sharing)
-[ver 0.4 (JP)](https://docs.google.com/document/d/1LNzIree1N4cUlGgIiVY1FijSOVP72S98gZMwPhDXNlw/edit?usp=sharing)
 [ver 0.4 (EN)](https://docs.google.com/document/d/1xHGQzJ4CwG-xsUguRl2wMdpgvsYHjSND6gInU8k3pP8/edit?usp=sharing)
+
+[ver 0.4 (JP)](https://docs.google.com/document/d/1LNzIree1N4cUlGgIiVY1FijSOVP72S98gZMwPhDXNlw/edit?usp=sharing)
+
+[ver 0.3 (JP)](https://docs.google.com/document/d/1b9S5hhJaEPMowWSLihDXAuJFFu3bsB46beQqKKnV82s/edit?usp=sharing)
+
 
 ## BOM
   https://docs.google.com/spreadsheets/d/1VDif7U_uzp9MytvVjhtFVuhgSCxw1dvosUy1xRro134/edit?usp=sharing
