@@ -4,7 +4,7 @@
 
 [ver 1.0 (JP)](https://github.com/centrevillage/C_Quencer/raw/master/doc/C_Quencer_ver1.0_Manual_JP.pdf)
 
-[ver 1.0 (EN) (stay translating...)](https://docs.google.com/document/d/1C3tVHr_0RKfUUkRJgVzGgZzC86ytRPRR3AXJSW8mrI8/edit?usp=sharing)
+[ver 1.0 (EN) (translated by Gert Braakman. Thanks!)](https://drive.google.com/file/d/1PbINYRG8AjUML1afg6QGoEZxlJ-1_oPO/view?usp=sharing)
 
 
 ## Building Manual
