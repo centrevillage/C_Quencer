@@ -48,10 +48,6 @@ inline void update_knob_value_inline(uint8_t i) {
 
   prev_knob_value = prev_knob_values[i];
 
-  //new_value_sum = 0;
-  //for (uint8_t j = 0; j < KNOB_VALUES_SIZE; ++j) {
-  //  new_value_sum += knob_values[i][j];
-  //}
   new_value_sum =  knob_values[i][0];
   new_value_sum += knob_values[i][1];
   new_value_sum += knob_values[i][2];
@@ -61,13 +57,10 @@ inline void update_knob_value_inline(uint8_t i) {
   new_value_sum += knob_values[i][6];
   new_value_sum += knob_values[i][7];
 
-  int diff = new_value_sum - prev_knob_value * KNOB_VALUES_SIZE;
-  if (diff >= KNOB_VALUES_SIZE) {
-    new_value = prev_knob_value + diff / KNOB_VALUES_SIZE;
-    set_current_value((uint8_t)new_value, i);
-    prev_knob_values[i] = new_value;
-  } else if (diff <= -KNOB_VALUES_SIZE) {
-    new_value = prev_knob_value - ((-diff) / KNOB_VALUES_SIZE);
+  uint16_t old_value_sum = prev_knob_value * KNOB_VALUES_SIZE;
+  if ((new_value_sum > old_value_sum + KNOB_VALUES_SIZE + KNOB_VALUES_SIZE / 2)
+      || (new_value_sum + KNOB_VALUES_SIZE / 2 < old_value_sum)) {
+    new_value = new_value_sum / KNOB_VALUES_SIZE;
     set_current_value((uint8_t)new_value, i);
     prev_knob_values[i] = new_value;
   }
