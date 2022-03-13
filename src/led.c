@@ -204,7 +204,7 @@ void output_led_on_left_8_right_8() {
 // use PD0 - PD5
 void output_led() {
   if (rec_mode == REC) {
-    if (led_blink_count++ < 16) {
+    if (led_blink_count++ < 32) {
       return;
     }
     led_blink_count = 0;
