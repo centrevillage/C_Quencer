@@ -22,11 +22,13 @@ void setup_pins() {
   DDRC = 0;
   // switch with pullup
   PORTC = _BV(5);
+  PORTB = _BV(4); // reset in pull up
 
   PORTB |= _BV(2); // gate off
 
   // pin interrupt for PC and PD ports
-  PCICR = _BV(PCIE1) | _BV(PCIE2);
+  PCICR = _BV(PCIE0) | _BV(PCIE1) | _BV(PCIE2);
+  PCMSK0 = _BV(PCINT4);
   PCMSK1 = _BV(PCINT12) | _BV(PCINT13);
   PCMSK2 = _BV(PCINT21) | _BV(PCINT22) | _BV(PCINT23); 
 }

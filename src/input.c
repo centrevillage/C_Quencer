@@ -707,6 +707,12 @@ ISR(PCINT1_vect) {
   return;
 };
 
+ISR(PCINT0_vect) {
+  if(bit_is_clear(PINB, 4)) {
+    reset_seq();
+  }
+};
+
 
 void leave_on_rec_mode() {
   // quantized rec

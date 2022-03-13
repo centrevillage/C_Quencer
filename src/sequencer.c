@@ -53,7 +53,7 @@ void step_seq_on_normal(){
   update_knob_values();
 
   cli();
-  if (_step < (current_values.v.step_length-1)) {
+  if (bit_is_set(PINB, 4) && _step < (current_values.v.step_length-1)) {
     ++_step;
     current_step = (_step + seq_start_shift) % 16;
   } else {
